@@ -1,0 +1,38 @@
+.column-name {
+  width: 15%;
+  min-width: 200px;
+}
+
+.column-description {
+  width: 40%;
+  min-width: 400px;
+}
+
+.column-size {
+  width: 10%;
+  min-width: 115px;
+}
+
+.column-hasQuickReload {
+  width: 10%;
+}
+
+.column-PID {
+  width: 5%;
+  min-width: 100px;
+}
+
+.column-actions {
+  width: 10%;
+  min-width: 100px;
+}
+
+.column-lastRunning {
+  width: 20%;
+  min-width: 100px;
+}
+
+th {
+  font-weight: bold !important;
+  font-size: 40px;
+}

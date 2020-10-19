@@ -1,0 +1,13 @@
+.jira-form {
+  width: 100%;
+}
+
+input[type="checkbox"] {
+  margin: 0;
+}
+
+.progress {
+  width: 100%;
+  height: 20px !important;
+}
+
