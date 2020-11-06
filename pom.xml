@@ -11,12 +11,12 @@
   </parent>
   <groupId>com.example</groupId>
   <artifactId>jiramanage</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <name>jiramanage</name>
   <description>Jira manage</description>
 
   <properties>
-    <app.version>1.0.0</app.version>
+    <app.version>1.1.0</app.version>
     <java.version>1.8</java.version>
   </properties>
 

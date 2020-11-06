@@ -5,6 +5,7 @@ import com.example.jiramanage.bean.InstancePath;
 import com.example.jiramanage.bean.JiraDownloadBean;
 import com.example.jiramanage.bean.JiraInstanceBean;
 import com.example.jiramanage.bean.MessageBean;
+import com.example.jiramanage.bean.OpenFolderBean;
 import com.example.jiramanage.bean.SetenvConfigBean;
 import com.example.jiramanage.bean.StartStopJiraBean;
 import com.example.jiramanage.enums.OrderUtils;
@@ -215,6 +216,27 @@ public class JiraInstanceController {
       return MessageBean.builder().data("success").isSuccess(true).title("Success")
           .message("Error when delete some temp files").statusCode(200).build();
     }
+  }
+
+  @PostMapping("jirainstance/open/directory")
+  public MessageBean deleteTempFilesOnServer(@RequestBody OpenFolderBean openFolderBean) {
+
+    Optional<JiraInstance> jiraInstance = jiraInstanceService.get(openFolderBean.getId());
+    if (jiraInstance.isPresent()) {
+      try {
+        if (openFolderBean.getFolder().equals("server")) {
+          Runtime.getRuntime().exec("open " + jiraInstance.get().getServerPath());
+        } else {
+          Runtime.getRuntime().exec("open " + jiraInstance.get().getHomePath());
+        }
+        return MessageBean.builder().data("success").isSuccess(true).title("Success")
+            .message("open folder ").statusCode(200).build();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    return MessageBean.builder().isSuccess(true).title("Error").message("Error when open directory")
+        .statusCode(200).build();
   }
 
 }
