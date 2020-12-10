@@ -143,7 +143,7 @@ const mapStateToProps = (state) => ({
   labelHomePath: state.labelHomePath
 });
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+const mapDispatchToProps = (dispatch) => ({
   fetchJiraVersions: () => dispatch(fetchJiraVersions()),
   onSubmit: async (e) => {
     e.preventDefault();
@@ -156,17 +156,19 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
         jiraVersion => jiraVersion.version
             === e.target.elements.selectJira.value)[0];
 
-    let jiraInstance = {
-      name: e.target.elements.name.value,
-      hasQuickReload: e.target.elements.hasQuickReload.checked,
-      serverPath: e.target.elements.serverPath.value,
-      homePath: e.target.elements.homePath.value,
-      description: e.target.elements.description.value,
-      url: jira.zipURL,
-      size: jira.size,
-      processId: ""
+    if (!fieldIsEmpty(e)){
+      let jiraInstance = {
+        name: e.target.elements.name.value,
+        hasQuickReload: e.target.elements.hasQuickReload.checked,
+        serverPath: e.target.elements.serverPath.value,
+        homePath: e.target.elements.homePath.value,
+        description: e.target.elements.description.value,
+        url: jira.zipURL,
+        size: jira.size,
+        processId: ""
+      }
+      dispatch(createJiraInstanceSubmit(jiraInstance));
     }
-    dispatch(createJiraInstanceSubmit(jiraInstance));
   },
   handleChangeServerInput: (e) => {
     e.preventDefault();
@@ -186,6 +188,12 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
   },
 
 });
+
+const fieldIsEmpty = (e) => {
+  return e.target.elements.name.value === ''
+      || e.target.elements.serverPath.value === ''
+      || e.target.elements.homePath.value === '';
+}
 
 const getState = (dispatch) => new Promise((resolve) => {
   dispatch((dispatch, getState) => {
