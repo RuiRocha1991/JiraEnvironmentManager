@@ -459,3 +459,13 @@ export const addBaseConfig = (value) => dispatch => {
   })
 }
 
+export const openFolder = (id, folder) => dispatch => {
+  axios.post("/api/jirainstance/open/directory", {id, folder})
+  .then(({data}) => {
+
+  })
+  .catch((response) => {
+    dispatch(showDialog(response));
+  })
+}
+
