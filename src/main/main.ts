@@ -11,14 +11,27 @@
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import log from 'electron-log';
+import { createLoggerUtil, logger, resolveHtmlPath } from './util';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
+
+const FILE_NAME_CONST = 'MAIN';
 
 export default class AppUpdater {
   constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
+    this.checkUpdate();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async checkUpdate() {
+    if (!logger) {
+      await createLoggerUtil();
+    }
+    autoUpdater.logger = logger;
+    logger.log({
+      level: 'debug',
+      message: 'Check for update',
+      file: FILE_NAME_CONST,
+    });
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
@@ -44,9 +57,14 @@ if (isDebug) {
 }
 
 const installExtensions = async () => {
+  logger.log({
+    level: 'debug',
+    message: 'Install dev tools extensions',
+    file: FILE_NAME_CONST,
+  });
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = ['REACT_DEVELOPER_TOOLS'];
+  const extensions = ['REACT_DEVELOPER_TOOLS', 'REDUX_DEVTOOLS'];
 
   return installer
     .default(
@@ -57,8 +75,21 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
+  if (!logger) {
+    await createLoggerUtil();
+  }
+  logger.log({
+    level: 'debug',
+    message: 'Start create the main window',
+    file: FILE_NAME_CONST,
+  });
   if (isDebug) {
     await installExtensions();
+    logger.log({
+      level: 'debug',
+      message: 'Install dev tools extensions is done',
+      file: FILE_NAME_CONST,
+    });
   }
 
   const RESOURCES_PATH = app.isPackaged
@@ -81,7 +112,7 @@ const createWindow = async () => {
     },
   });
 
-  mainWindow.loadURL(resolveHtmlPath('index.html'));
+  mainWindow.loadURL(resolveHtmlPath('/'));
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
@@ -98,6 +129,11 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
+  logger.log({
+    level: 'debug',
+    message: 'Create menu',
+    file: FILE_NAME_CONST,
+  });
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
@@ -135,3 +171,11 @@ app
     });
   })
   .catch(console.log);
+
+ipcMain.on('writeLog', async (_event, args) => {
+  logger.log({
+    level: args[0],
+    message: args[1],
+    file: args[2],
+  });
+});

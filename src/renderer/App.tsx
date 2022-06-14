@@ -40,6 +40,11 @@ const Hello = () => {
 };
 
 export default function App() {
+  window.electron.ipcRenderer.sendMessage('writeLog', [
+    'info',
+    'Message from react app',
+    'App',
+  ]);
   return (
     <Router>
       <Routes>
