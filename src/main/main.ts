@@ -37,12 +37,7 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
+let modalWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -74,6 +69,14 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+const RESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(__dirname, '../../assets');
+
+const getAssetPath = (...paths: string[]): string => {
+  return path.join(RESOURCES_PATH, ...paths);
+};
+
 const createWindow = async () => {
   if (!logger) {
     await createLoggerUtil();
@@ -92,19 +95,12 @@ const createWindow = async () => {
     });
   }
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
-
   mainWindow = new BrowserWindow({
     show: false,
     width: 1024,
     height: 728,
     icon: getAssetPath('icon.png'),
+    backgroundColor: '#e0e0e0',
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -116,6 +112,11 @@ const createWindow = async () => {
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
+      logger.log({
+        level: 'error',
+        message: '"mainWindow" is not defined',
+        file: FILE_NAME_CONST,
+      });
       throw new Error('"mainWindow" is not defined');
     }
     if (process.env.START_MINIMIZED) {
@@ -178,4 +179,59 @@ ipcMain.on('writeLog', async (_event, args) => {
     message: args[0].message,
     file: args[0].file,
   });
+});
+
+const newWindow = () => {
+  logger.log({
+    level: 'debug',
+    message: 'Start create a modal',
+    file: FILE_NAME_CONST,
+  });
+  if (mainWindow && !modalWindow) {
+    modalWindow = new BrowserWindow({
+      show: false,
+      width: 800,
+      height: 500,
+      parent: mainWindow,
+      modal: true,
+      backgroundColor: '#e0e0e0',
+      icon: getAssetPath('icon.png'),
+      webPreferences: {
+        preload: app.isPackaged
+          ? path.join(__dirname, 'preload.js')
+          : path.join(__dirname, '../../.erb/dll/preload.js'),
+      },
+    });
+
+    modalWindow.loadURL(resolveHtmlPath('/secondWindow'));
+
+    modalWindow.on('ready-to-show', () => {
+      if (!modalWindow) {
+        logger.log({
+          level: 'error',
+          message: '"modal" is not defined',
+          file: FILE_NAME_CONST,
+        });
+        throw new Error('"modal" is not defined');
+      }
+      logger.log({
+        level: 'debug',
+        message: 'Modal is ready',
+        file: FILE_NAME_CONST,
+      });
+      modalWindow.show();
+    });
+
+    modalWindow.on('closed', () => {
+      modalWindow = null;
+    });
+  }
+};
+
+ipcMain.on('openModal', (_event) => {
+  newWindow();
+});
+
+ipcMain.on('closeModal', (_event) => {
+  modalWindow?.close();
 });

@@ -1,41 +1,40 @@
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
-import './App.css';
+import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
+
+const openSecondWindow = () => {
+  window.electron.ipcRenderer.sendMessage('openModal', []);
+};
 
 const Hello = () => {
   return (
-    <div>
-      <div className="Hello">
-        <img width="200px" alt="icon" src={icon} />
+    <>
+      <div>
+        <h1>Main window</h1>
       </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
+      <div>
+        <button type="button" onClick={openSecondWindow}>
+          Open Modal
+        </button>
       </div>
-    </div>
+    </>
+  );
+};
+
+const closeModal = () => {
+  window.electron.ipcRenderer.sendMessage('closeModal', []);
+};
+
+const SecondWindow = () => {
+  return (
+    <>
+      <div>
+        <h1>Modal window</h1>
+      </div>
+      <div>
+        <button type="button" onClick={closeModal}>
+          CLOSE
+        </button>
+      </div>
+    </>
   );
 };
 
@@ -43,11 +42,38 @@ export default function App() {
   window.electron.ipcRenderer.sendMessage('writeLog', [
     { level: 'debug', message: 'Message from react app', file: 'App' },
   ]);
-  return (
-    <Router>
+
+  const RenderRoutes = () => {
+    return (
       <Routes>
         <Route path="/" element={<Hello />} />
+        <Route path="/secondWindow" element={<SecondWindow />} />
       </Routes>
-    </Router>
-  );
+    );
+  };
+
+  const RenderDev = () => {
+    return (
+      <BrowserRouter>
+        <RenderRoutes />
+      </BrowserRouter>
+    );
+  };
+
+  const RenderPro = () => {
+    return (
+      <HashRouter>
+        <RenderRoutes />
+      </HashRouter>
+    );
+  };
+
+  const Render = () => {
+    if (process.env.NODE_ENV === 'production') {
+      return <RenderPro />;
+    }
+    return <RenderDev />;
+  };
+
+  return <Render />;
 }

@@ -8,10 +8,18 @@ import winston from 'winston';
 const FILE_NAME_CONST = 'UTILS';
 
 const isDev: boolean = process.env.NODE_ENV === 'development';
+export const userDataPath: string = app.getPath('userData');
+export const logDir: string = path.join(userDataPath, path.sep, 'logs');
+export let logger: any;
 
 export const resolveHtmlPath: (hashRoute: string) => string = (
   hashRoute: string
 ) => {
+  logger.log({
+    level: 'debug',
+    message: 'Start resolve html Path',
+    file: FILE_NAME_CONST,
+  });
   const port = process.env.PORT || 1212;
   const devBasePath = `http://localhost:${port}${hashRoute}`;
 
@@ -23,12 +31,13 @@ export const resolveHtmlPath: (hashRoute: string) => string = (
         slashes: true,
         hash: hashRoute,
       });
+  logger.log({
+    level: 'debug',
+    message: `Resolved html Path result: ${startURL}`,
+    file: FILE_NAME_CONST,
+  });
   return startURL;
 };
-
-export const userDataPath: string = app.getPath('userData');
-export const logDir: string = path.join(userDataPath, path.sep, 'logs');
-export let logger: any;
 
 export const createLoggerUtil: () => void = async () =>
   // eslint-disable-next-line no-async-promise-executor
