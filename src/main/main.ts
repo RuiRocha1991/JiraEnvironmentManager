@@ -97,10 +97,9 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
+    width: 1200,
     height: 728,
     icon: getAssetPath('icon.png'),
-    backgroundColor: '#e0e0e0',
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -181,7 +180,7 @@ ipcMain.on('writeLog', async (_event, args) => {
   });
 });
 
-const newWindow = () => {
+const newWindow = async () => {
   logger.log({
     level: 'debug',
     message: 'Start create a modal',
@@ -194,7 +193,6 @@ const newWindow = () => {
       height: 500,
       parent: mainWindow,
       modal: true,
-      backgroundColor: '#e0e0e0',
       icon: getAssetPath('icon.png'),
       webPreferences: {
         preload: app.isPackaged
