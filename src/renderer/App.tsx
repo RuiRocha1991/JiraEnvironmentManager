@@ -41,9 +41,7 @@ const Hello = () => {
 
 export default function App() {
   window.electron.ipcRenderer.sendMessage('writeLog', [
-    'info',
-    'Message from react app',
-    'App',
+    { level: 'debug', message: 'Message from react app', file: 'App' },
   ]);
   return (
     <Router>

@@ -174,8 +174,8 @@ app
 
 ipcMain.on('writeLog', async (_event, args) => {
   logger.log({
-    level: args[0],
-    message: args[1],
-    file: args[2],
+    level: args[0].level,
+    message: args[0].message,
+    file: args[0].file,
   });
 });
