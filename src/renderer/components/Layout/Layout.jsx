@@ -5,14 +5,14 @@ import { Page } from '../index';
 
 const CustomPage = styled(Page)(() => ({
   height: '100%',
-  'background-color': '#0093E9',
-  'background-image': 'linear-gradient(225deg, #0093E9 0%, #80D0C7 100%)',
+  backgroundColor: '#0093E9',
+  backgroundImage: 'linear-gradient(225deg, #0093E9 0%, #80D0C7 100%)',
 }));
 
 const CustomContainer = styled(Container)(() => ({
   height: '100%',
-  'padding-top': '24px',
-  'padding-bottom': '24px',
+  paddingTop: '24px',
+  paddingBottom: '24px',
 }));
 
 const CustomCard = styled(Card)(() => ({

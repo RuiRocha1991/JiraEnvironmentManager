@@ -12,7 +12,7 @@ const key = Buffer.from(
 const iv = Buffer.from('2550eff4d3852e6ebc3872209d9e5f39', 'hex');
 
 const afterSerialization = (doc: string) => {
-  if (dbHelper.isJson(doc)) {
+  if (dbHelper.default.isJson(doc)) {
     const cipher = createCipheriv(algorithm, key, iv);
     return (
       cipher.update(JSON.stringify(doc), 'utf8', 'hex') + cipher.final('hex')
@@ -40,4 +40,16 @@ const jiraInstances = Datastore.create({
   beforeDeserialization: (doc: string) => beforeSerialization(doc),
 });
 
-export default { jiraInstances };
+const settings = Datastore.create({
+  filename: path.join(app.getPath('userData'), 'settings.db'),
+  autoload: true,
+  afterSerialization: (doc: string) => afterSerialization(doc),
+  beforeDeserialization: (doc: string) => beforeSerialization(doc),
+});
+
+const mainDB = {
+  jiraInstances,
+  settings,
+};
+
+export default mainDB;

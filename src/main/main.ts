@@ -13,6 +13,8 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { createLoggerUtil, logger, resolveHtmlPath } from './util';
 import MenuBuilder from './menu';
+import launchListeners from './listeners/launchListener';
+import settingsListener from "./listeners/SettingsListener";
 
 const FILE_NAME_CONST = 'MAIN';
 
@@ -136,6 +138,10 @@ const createWindow = async () => {
   });
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
+
+  // Start Listeners
+  launchListeners.on();
+  settingsListener.on();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {

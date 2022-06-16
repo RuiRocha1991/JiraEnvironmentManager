@@ -246,7 +246,7 @@
   "electronmon": {
     "patterns": [
       "!**/**",
-      "src/main/*"
+      "src/main/**"
     ],
     "logLevel": "quiet"
   }

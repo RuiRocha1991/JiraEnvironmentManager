@@ -7,6 +7,13 @@ import winston from 'winston';
 
 const FILE_NAME_CONST = 'UTILS';
 
+export const LogLevel = {
+  INFO: 'info',
+  DEBUG: 'debug',
+  ERROR: 'error',
+  WARNING: 'warn',
+};
+
 const isDev: boolean = process.env.NODE_ENV === 'development';
 export const userDataPath: string = app.getPath('userData');
 export const logDir: string = path.join(userDataPath, path.sep, 'logs');
