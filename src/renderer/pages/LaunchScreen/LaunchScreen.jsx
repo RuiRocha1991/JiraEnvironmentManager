@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import { Box, LinearProgress, Typography } from '@mui/material';
+import { useDispatch } from 'react-redux';
 import { Layout } from '../../components';
+import { updateSettings } from '../../redux/slices/settingsSlice';
 
 const Container = styled('div')(({ theme }) => ({
   height: '100%',
@@ -21,26 +23,41 @@ const LaunchScreen = () => {
     progressInfo: 'Loading database configuration',
   });
 
-  window.electron.ipcRenderer.once('isFirstLaunch', (arg) => {
-    console.log(arg);
-    if (arg.isFirstLaunch) {
-      console.log('is first launch and redirect to settings page...');
-      setState({
-        progressInfo: 'Is first launch and you will redirect to Settings page',
-      });
-      setTimeout(() => {
-        window.electron.ipcRenderer.sendMessage('updateFirstLaunch', []);
-      }, 5000);
+  const dispatch = useDispatch();
+
+  const loadDatabaseInformation = () => {
+    window.electron.ipcRenderer.sendMessage('getSettings', []);
+  };
+
+  window.electron.ipcRenderer.once('getSettings', ({ response }) => {
+    const { status, data } = response;
+    if (status === 'OK') {
+      if (!('isFirstLaunch' in data)) {
+        console.log('is first launch and redirect to settings page...');
+        setState({
+          progressInfo: 'Redirect to Settings Page',
+        });
+        window.electron.ipcRenderer.sendMessage('openSettingsScreen', []);
+        window.electron.ipcRenderer.on('forceUpdate', () => {
+          console.log('forceUpdate');
+          loadDatabaseInformation();
+        });
+      } else {
+        setState({
+          progressInfo: 'Load Jira Environments',
+        });
+        dispatch({
+          type: updateSettings.type,
+          payload: { ...response.data, isFirstLaunch: false },
+        });
+        window.electron.ipcRenderer.sendMessage('redirectMainWindow', [
+          '/jiraInstances',
+        ]);
+      }
     } else {
-      console.log('is not first launch and redirect to Jira instances page...');
-      setState({
-        progressInfo: 'Is not first launch and redirect to Jira instances page',
-      });
+      console.log('error on load settings');
     }
   });
-  const loadDatabaseInformation = () => {
-    window.electron.ipcRenderer.sendMessage('isFirstLaunch', []);
-  };
 
   useEffect(() => {
     loadDatabaseInformation();

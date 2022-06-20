@@ -1,49 +1,62 @@
 import { Settings } from '../typings/Settings';
-import { logger, LogLevel } from '../util';
+import { Logger, LogLevel } from '../util';
 import mainDB from './db-main';
-
-const FILE_NAME_CONST = 'Settings-Model';
 
 type SettingsModel = {
   getIsFirstLaunch: () => Promise<boolean>;
-  updateSetting: (setting: Settings) => Promise<number>;
+  updateSettings: (setting: Settings) => Promise<number>;
+  getAllSettings: () => Promise<Settings[]>;
 };
+
+const LOGGER = new Logger('Settings Model');
 
 const getIsFirstLaunch = async () => {
   try {
+    LOGGER.log(LogLevel.DEBUG, 'Get Is First Launch');
     const { isFirstLaunch = true } = (await mainDB.settings.findOne({})) || {};
+    LOGGER.log(LogLevel.DEBUG, 'Get Is First Launch: {0}', [isFirstLaunch]);
     return isFirstLaunch;
   } catch (e: any) {
-    logger.log({
-      level: LogLevel.ERROR,
-      message: `Get Is First Launch: ${e.message}`,
-      file: FILE_NAME_CONST,
-    });
+    LOGGER.log(LogLevel.ERROR, 'Get Is First Launch: {0}', [e.message]);
     throw e;
   }
 };
 
-const updateSetting = async (setting: Settings) => {
+const updateSettings = async (settings: Settings) => {
   try {
+    LOGGER.log(LogLevel.DEBUG, 'Update Settings');
     const rowsUpdated = await mainDB.settings.update(
       {},
-      { $set: { ...setting } },
+      { $set: { ...settings } },
       { upsert: true }
     );
+    LOGGER.log(LogLevel.DEBUG, 'Settings Updated: {0} rows', [rowsUpdated]);
     return rowsUpdated;
   } catch (e: any) {
-    logger.log({
-      level: LogLevel.ERROR,
-      message: `Update Setting: ${JSON.stringify(setting)} - ${e.message}`,
-      file: FILE_NAME_CONST,
-    });
+    LOGGER.log(LogLevel.DEBUG, 'Update Settings: {0} - {1}', [
+      settings,
+      e.message,
+    ]);
+    throw e;
+  }
+};
+
+const getAllSettings = async () => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Get All Settings');
+    const settings = (await mainDB.settings.findOne({})) || {};
+    LOGGER.log(LogLevel.DEBUG, 'Get all settings: {0}', [settings]);
+    return settings;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Get all settings: {0}', [e.message]);
     throw e;
   }
 };
 
 const settingsModel: SettingsModel = {
   getIsFirstLaunch,
-  updateSetting,
+  updateSettings,
+  getAllSettings,
 };
 
 export default settingsModel;

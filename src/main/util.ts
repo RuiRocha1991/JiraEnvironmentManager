@@ -5,7 +5,6 @@ import fs from 'fs';
 import { app, dialog } from 'electron';
 import winston from 'winston';
 
-const FILE_NAME_CONST = 'UTILS';
 
 export const LogLevel = {
   INFO: 'info',
@@ -19,14 +18,45 @@ export const userDataPath: string = app.getPath('userData');
 export const logDir: string = path.join(userDataPath, path.sep, 'logs');
 export let logger: any;
 
+export class Logger {
+  file: string;
+
+  constructor(file: string) {
+    this.file = file;
+  }
+
+  log(level: string, message: string, args?: any[]) {
+    let finalMessage: string;
+    if (args) {
+      finalMessage = message;
+      args.forEach((arg, index) => {
+        finalMessage = finalMessage.replace(`{${index}}`, JSON.stringify(arg));
+      });
+    } else {
+      finalMessage = message;
+    }
+    logger.log({
+      level,
+      message: finalMessage,
+      file: this.file,
+    });
+  }
+}
+
+export const loggerUtils: (
+  level: string,
+  message: string,
+  file: string
+) => void = (level: string, message: string, file: string) => {
+  logger.log({ level, message, file });
+};
+
+const LOGGER = new Logger('Util');
+
 export const resolveHtmlPath: (hashRoute: string) => string = (
   hashRoute: string
 ) => {
-  logger.log({
-    level: 'debug',
-    message: 'Start resolve html Path',
-    file: FILE_NAME_CONST,
-  });
+  LOGGER.log(LogLevel.DEBUG, 'Resolve HTML Path: {0}', [hashRoute]);
   const port = process.env.PORT || 1212;
   const devBasePath = `http://localhost:${port}${hashRoute}`;
 
@@ -38,11 +68,7 @@ export const resolveHtmlPath: (hashRoute: string) => string = (
         slashes: true,
         hash: hashRoute,
       });
-  logger.log({
-    level: 'debug',
-    message: `Resolved html Path result: ${startURL}`,
-    file: FILE_NAME_CONST,
-  });
+  LOGGER.log(LogLevel.DEBUG, 'Resolved html Path: {0}', [startURL]);
   return startURL;
 };
 
@@ -96,11 +122,7 @@ export const createLoggerUtil: () => void = async () =>
           })
         );
       }
-      logger.log({
-        level: 'info',
-        message: 'Logger was created with success',
-        file: FILE_NAME_CONST,
-      });
+      LOGGER.log(LogLevel.INFO, 'Logger was created with success');
       resolve();
     } catch (e) {
       const options = {
@@ -109,7 +131,6 @@ export const createLoggerUtil: () => void = async () =>
         message: 'Error creating the log folder. Please relaunch the app.',
         buttons: ['Close'],
       };
-
       dialog.showMessageBoxSync(options);
       reject();
     }

@@ -11,12 +11,20 @@
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import { createLoggerUtil, logger, resolveHtmlPath } from './util';
+import {
+  createLoggerUtil,
+  Logger,
+  logger,
+  LogLevel,
+  resolveHtmlPath,
+} from './util';
 import MenuBuilder from './menu';
-import launchListeners from './listeners/launchListener';
-import settingsListener from "./listeners/SettingsListener";
+import settingsListener from './listeners/SettingsListener';
 
-const FILE_NAME_CONST = 'MAIN';
+const LOGGER = new Logger('Main');
+let mainWindow: BrowserWindow | null = null;
+let modalWindow: BrowserWindow | null = null;
+let settingsWindow: BrowserWindow | null = null;
 
 export default class AppUpdater {
   constructor() {
@@ -29,17 +37,10 @@ export default class AppUpdater {
       await createLoggerUtil();
     }
     autoUpdater.logger = logger;
-    logger.log({
-      level: 'debug',
-      message: 'Check for update',
-      file: FILE_NAME_CONST,
-    });
+    LOGGER.log(LogLevel.INFO, 'Check for update');
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
-
-let mainWindow: BrowserWindow | null = null;
-let modalWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -54,11 +55,7 @@ if (isDebug) {
 }
 
 const installExtensions = async () => {
-  logger.log({
-    level: 'debug',
-    message: 'Install dev tools extensions',
-    file: FILE_NAME_CONST,
-  });
+  LOGGER.log(LogLevel.DEBUG, 'Install dev tools extensions');
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
   const extensions = ['REACT_DEVELOPER_TOOLS', 'REDUX_DEVTOOLS'];
@@ -83,18 +80,10 @@ const createWindow = async () => {
   if (!logger) {
     await createLoggerUtil();
   }
-  logger.log({
-    level: 'debug',
-    message: 'Start create the main window',
-    file: FILE_NAME_CONST,
-  });
+  LOGGER.log(LogLevel.DEBUG, 'Create Main Window');
   if (isDebug) {
     await installExtensions();
-    logger.log({
-      level: 'debug',
-      message: 'Install dev tools extensions is done',
-      file: FILE_NAME_CONST,
-    });
+    LOGGER.log(LogLevel.DEBUG, 'Install dev tools extensions is done');
   }
 
   mainWindow = new BrowserWindow({
@@ -113,11 +102,7 @@ const createWindow = async () => {
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
-      logger.log({
-        level: 'error',
-        message: '"mainWindow" is not defined',
-        file: FILE_NAME_CONST,
-      });
+      LOGGER.log(LogLevel.ERROR, '"mainWindow" is not defined');
       throw new Error('"mainWindow" is not defined');
     }
     if (process.env.START_MINIMIZED) {
@@ -130,17 +115,11 @@ const createWindow = async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  logger.log({
-    level: 'debug',
-    message: 'Create menu',
-    file: FILE_NAME_CONST,
-  });
+  LOGGER.log(LogLevel.DEBUG, 'Create menu');
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
   // Start Listeners
-  launchListeners.on();
   settingsListener.on();
 
   // Open urls in the user's browser
@@ -187,11 +166,7 @@ ipcMain.on('writeLog', async (_event, args) => {
 });
 
 const newWindow = async () => {
-  logger.log({
-    level: 'debug',
-    message: 'Start create a modal',
-    file: FILE_NAME_CONST,
-  });
+  LOGGER.log(LogLevel.DEBUG, 'Create modal started');
   if (mainWindow && !modalWindow) {
     modalWindow = new BrowserWindow({
       show: false,
@@ -211,23 +186,50 @@ const newWindow = async () => {
 
     modalWindow.on('ready-to-show', () => {
       if (!modalWindow) {
-        logger.log({
-          level: 'error',
-          message: '"modal" is not defined',
-          file: FILE_NAME_CONST,
-        });
+        LOGGER.log(LogLevel.ERROR, '"modal" is not defined');
         throw new Error('"modal" is not defined');
       }
-      logger.log({
-        level: 'debug',
-        message: 'Modal is ready',
-        file: FILE_NAME_CONST,
-      });
+      LOGGER.log(LogLevel.DEBUG, 'Modal is ready');
       modalWindow.show();
     });
 
     modalWindow.on('closed', () => {
       modalWindow = null;
+    });
+  }
+};
+
+const openSettingsWindow = () => {
+  LOGGER.log(LogLevel.DEBUG, 'Create Settings Window');
+  if (mainWindow && !settingsWindow) {
+    settingsWindow = new BrowserWindow({
+      show: false,
+      resizable: false,
+      width: 800,
+      height: 700,
+      parent: mainWindow,
+      modal: true,
+      icon: getAssetPath('icon.png'),
+      webPreferences: {
+        preload: app.isPackaged
+          ? path.join(__dirname, 'preload.js')
+          : path.join(__dirname, '../../.erb/dll/preload.js'),
+      },
+    });
+
+    settingsWindow.loadURL(resolveHtmlPath('/settings'));
+
+    settingsWindow.on('ready-to-show', () => {
+      if (!settingsWindow) {
+        LOGGER.log(LogLevel.ERROR, '"Settings Window" is not defined');
+        throw new Error('"Settings Window" is not defined');
+      }
+      LOGGER.log(LogLevel.DEBUG, 'Settings Window is ready');
+      settingsWindow.show();
+    });
+
+    settingsWindow.on('closed', () => {
+      settingsWindow = null;
     });
   }
 };
@@ -238,4 +240,22 @@ ipcMain.on('openModal', (_event) => {
 
 ipcMain.on('closeModal', (_event) => {
   modalWindow?.close();
+});
+
+ipcMain.on('openSettingsScreen', (_event) => {
+  LOGGER.log(LogLevel.INFO, 'Open Settings Screen');
+  openSettingsWindow();
+});
+
+ipcMain.on('closeSettingsWindow', (_event) => {
+  settingsWindow?.close();
+});
+
+ipcMain.on('forceUpdate', (_event) => {
+  mainWindow?.webContents.send('forceUpdate');
+});
+
+ipcMain.on('redirectMainWindow', (_event, args) => {
+  LOGGER.log(LogLevel.INFO, 'Redirect Main Window to: ', args);
+  mainWindow?.loadURL(resolveHtmlPath(args[0]));
 });

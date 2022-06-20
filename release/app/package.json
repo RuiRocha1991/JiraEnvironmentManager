@@ -1,5 +1,6 @@
 {
   "name": "jira-environment-manager",
+  "productName": "Jira Environment Manager",
   "version": "0.0.0-alfa.1",
   "description": "Jira Environment Manager",
   "license": "MIT",

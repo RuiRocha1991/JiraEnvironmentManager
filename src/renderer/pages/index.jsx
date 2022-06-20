@@ -1,2 +1,3 @@
 export { default as LaunchScreen } from './LaunchScreen';
-export { default as Page2 } from './Page2';
+export { default as Settings } from './Settings';
+export { default as JiraInstancesList } from './JiraInstancesList';

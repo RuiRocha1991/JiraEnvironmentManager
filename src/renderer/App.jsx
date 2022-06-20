@@ -1,7 +1,7 @@
 import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
 import ThemeProvider from './theme';
 import './App.css';
-import { LaunchScreen, Page2 } from './pages';
+import { JiraInstancesList, LaunchScreen, Settings } from './pages';
 
 export default function App() {
   window.electron.ipcRenderer.sendMessage('writeLog', [
@@ -13,7 +13,8 @@ export default function App() {
       <ThemeProvider>
         <Routes>
           <Route path="/" element={<LaunchScreen />} />
-          <Route path="/secondWindow" element={<Page2 />} />
+          <Route path="/jiraInstances" element={<JiraInstancesList />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </ThemeProvider>
     );
