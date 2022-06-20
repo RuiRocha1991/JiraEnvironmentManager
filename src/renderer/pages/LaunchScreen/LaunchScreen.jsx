@@ -4,6 +4,7 @@ import { Box, LinearProgress, Typography } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { Layout } from '../../components';
 import { updateSettings } from '../../redux/slices/settingsSlice';
+import { loadAllInstances } from '../../redux/slices/jiraInstanceSlice';
 
 const Container = styled('div')(({ theme }) => ({
   height: '100%',
@@ -29,30 +30,44 @@ const LaunchScreen = () => {
     window.electron.ipcRenderer.sendMessage('getSettings', []);
   };
 
+  const loadJiraInstances = () => {
+    window.electron.ipcRenderer.sendMessage('loadJiraInstances', []);
+    window.electron.ipcRenderer.once('loadJiraInstances', ({ response }) => {
+      const { status, data } = response;
+      if (status === 'OK') {
+        dispatch({
+          type: loadAllInstances.type,
+          payload: data,
+        });
+        window.electron.ipcRenderer.sendMessage('redirectMainWindow', [
+          '/jiraInstances',
+        ]);
+      } else {
+        console.log('error on load jira instances');
+      }
+    });
+  };
+
   window.electron.ipcRenderer.once('getSettings', ({ response }) => {
     const { status, data } = response;
     if (status === 'OK') {
       if (!('isFirstLaunch' in data)) {
-        console.log('is first launch and redirect to settings page...');
         setState({
           progressInfo: 'Redirect to Settings Page',
         });
         window.electron.ipcRenderer.sendMessage('openSettingsScreen', []);
         window.electron.ipcRenderer.on('forceUpdate', () => {
-          console.log('forceUpdate');
           loadDatabaseInformation();
         });
       } else {
         setState({
-          progressInfo: 'Load Jira Environments',
+          progressInfo: 'Load Jira Instances',
         });
         dispatch({
           type: updateSettings.type,
           payload: { ...response.data, isFirstLaunch: false },
         });
-        window.electron.ipcRenderer.sendMessage('redirectMainWindow', [
-          '/jiraInstances',
-        ]);
+        loadJiraInstances();
       }
     } else {
       console.log('error on load settings');

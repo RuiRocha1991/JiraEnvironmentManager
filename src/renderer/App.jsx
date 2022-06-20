@@ -4,9 +4,6 @@ import './App.css';
 import { JiraInstancesList, LaunchScreen, Settings } from './pages';
 
 export default function App() {
-  window.electron.ipcRenderer.sendMessage('writeLog', [
-    { level: 'debug', message: 'Message from react app', file: 'App' },
-  ]);
 
   const RenderRoutes = () => {
     return (

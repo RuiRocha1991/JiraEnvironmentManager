@@ -20,6 +20,7 @@ import {
 } from './util';
 import MenuBuilder from './menu';
 import settingsListener from './listeners/SettingsListener';
+import jiraInstancesListener from "./listeners/JiraInstancesListener";
 
 const LOGGER = new Logger('Main');
 let mainWindow: BrowserWindow | null = null;
@@ -121,6 +122,7 @@ const createWindow = async () => {
 
   // Start Listeners
   settingsListener.on();
+  jiraInstancesListener.on();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {

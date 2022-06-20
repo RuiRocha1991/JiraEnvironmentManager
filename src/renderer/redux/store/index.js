@@ -8,6 +8,7 @@ import { persistReducer, persistStore } from 'redux-persist';
 import rootSaga from '../sagas';
 
 import settingsSlice from '../slices/settingsSlice';
+import jiraInstanceSlice from '../slices/jiraInstanceSlice';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -19,6 +20,7 @@ const persistConfig = {
 
 const reducers = combineReducers({
   appSettings: settingsSlice,
+  jiraInstanceManager: jiraInstanceSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, reducers);

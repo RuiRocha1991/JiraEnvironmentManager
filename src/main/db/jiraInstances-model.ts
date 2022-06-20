@@ -1,4 +1,6 @@
 import { JiraInstance } from '../typings/JiraInstance';
+import mainDB from './db-main';
+import {Logger, LogLevel} from "../util";
 
 const { jiraInstances } = require('./db-main');
 
@@ -6,6 +8,8 @@ type JiraInstancesModel = {
   addJiraInstance: (jiraInstance: JiraInstance) => Promise<JiraInstance>;
   getJiraInstances: () => Promise<JiraInstance[]>;
 };
+
+const LOGGER = new Logger('JiraInstances-Model');
 
 const addJiraInstance = async (jiraInstance: JiraInstance) => {
   const instance = await jiraInstances
@@ -33,8 +37,9 @@ const addJiraInstance = async (jiraInstance: JiraInstance) => {
 };
 
 const getJiraInstances = async () => {
-  const instances = await jiraInstances.find({});
-
+  LOGGER.log(LogLevel.DEBUG, 'Get Jira Instances');
+  const instances = (await mainDB.jiraInstances.find({})) || {};
+  LOGGER.log(LogLevel.DEBUG, 'Get Jira Instances: {0}', [instances]);
   return instances.map(
     (instance: any) =>
       <JiraInstance>{

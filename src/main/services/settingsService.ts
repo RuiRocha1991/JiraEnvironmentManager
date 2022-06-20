@@ -10,7 +10,7 @@ type SettingsService = {
   getAllSettings: () => Promise<ServiceResponse>;
 };
 
-const LOGGER = new Logger('Settings Service');
+const LOGGER = new Logger('SettingsService');
 
 const isFirstLaunch = async () => {
   try {

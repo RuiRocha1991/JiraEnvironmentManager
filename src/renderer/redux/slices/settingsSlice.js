@@ -11,7 +11,6 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     updateSettings: (state, { payload }) => {
-      console.log(payload);
       state.settings = {
         ...state.settings,
         ...payload,

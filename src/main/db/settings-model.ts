@@ -8,7 +8,7 @@ type SettingsModel = {
   getAllSettings: () => Promise<Settings[]>;
 };
 
-const LOGGER = new Logger('Settings Model');
+const LOGGER = new Logger('Settings-Model');
 
 const getIsFirstLaunch = async () => {
   try {
