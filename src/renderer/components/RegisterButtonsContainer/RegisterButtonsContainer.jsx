@@ -39,7 +39,7 @@ const RegisterButtonsContainer = (props) => {
           loading={isSubmitting}
           sx={{ ml: 1 }}
         >
-          Register
+          Save
         </LoadingButton>
       </ButtonContainer>
     </Container>

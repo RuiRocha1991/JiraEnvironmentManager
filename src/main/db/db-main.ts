@@ -47,9 +47,17 @@ const settings = Datastore.create({
   beforeDeserialization: (doc: string) => beforeSerialization(doc),
 });
 
+const process = Datastore.create({
+  filename: path.join(app.getPath('userData'), 'process.db'),
+  autoload: true,
+  afterSerialization: (doc: string) => afterSerialization(doc),
+  beforeDeserialization: (doc: string) => beforeSerialization(doc),
+});
+
 const mainDB = {
   jiraInstances,
   settings,
+  process,
 };
 
 export default mainDB;

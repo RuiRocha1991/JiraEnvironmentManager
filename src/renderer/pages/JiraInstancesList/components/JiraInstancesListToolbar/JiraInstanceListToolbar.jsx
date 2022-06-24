@@ -44,16 +44,7 @@ export default function JiraInstanceListToolbar({
   onFilterName,
 }) {
   const handleOpenAddInstance = () => {
-    /* ipcRenderer.send('addInstance', {});
-    ipcRenderer.once('addInstance', (_event, response) => {
-      const { status, data } = response;
-      if (status === 'OK') {
-        dispatch({
-          type: addInstance.type,
-          payload: { ...response, message: `Instance ${data.name} is added` },
-        });
-      }
-    }); */
+    window.electron.ipcRenderer.sendMessage('openInstanceManagerWindow', []);
   };
 
   return (

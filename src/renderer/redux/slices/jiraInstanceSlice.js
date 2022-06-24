@@ -10,8 +10,6 @@ export const jiraInstanceSlice = createSlice({
   initialState,
   reducers: {
     loadAllInstances: (state, { payload }) => {
-      console.log(payload);
-      console.log('loadAllInstances');
       state.jiraInstances = payload;
     },
     addInstance: (state, { payload }) => {

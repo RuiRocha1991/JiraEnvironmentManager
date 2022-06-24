@@ -5,7 +5,6 @@ import fs from 'fs';
 import { app, dialog } from 'electron';
 import winston from 'winston';
 
-
 export const LogLevel = {
   INFO: 'info',
   DEBUG: 'debug',
@@ -17,6 +16,23 @@ const isDev: boolean = process.env.NODE_ENV === 'development';
 export const userDataPath: string = app.getPath('userData');
 export const logDir: string = path.join(userDataPath, path.sep, 'logs');
 export let logger: any;
+
+export const StatusProgress = {
+  STARTING: 'Starting',
+  ABORTED: 'Aborted',
+  PROCESSING: 'Processing',
+  FINISHED: 'Finished',
+  CANCELED: 'Canceled',
+};
+
+export const ProcessInfoTaskKeys = {
+  START: 'Start',
+  DOWNLOAD: 'Download',
+  CREATE_FOLDER: 'Create Folder',
+  UNZIP: 'Unzio',
+  MOVE_FOLDER: 'Move Folder',
+  CLEAN_TEMP: 'Clean Temp',
+};
 
 export class Logger {
   file: string;

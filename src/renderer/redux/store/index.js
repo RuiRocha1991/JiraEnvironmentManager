@@ -9,6 +9,7 @@ import rootSaga from '../sagas';
 
 import settingsSlice from '../slices/settingsSlice';
 import jiraInstanceSlice from '../slices/jiraInstanceSlice';
+import processInfoSlice from '../slices/processSlice';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -21,6 +22,7 @@ const persistConfig = {
 const reducers = combineReducers({
   appSettings: settingsSlice,
   jiraInstanceManager: jiraInstanceSlice,
+  processInfo: processInfoSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, reducers);

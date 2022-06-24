@@ -20,11 +20,12 @@ import {
 } from './util';
 import MenuBuilder from './menu';
 import settingsListener from './listeners/SettingsListener';
-import jiraInstancesListener from "./listeners/JiraInstancesListener";
+import jiraInstancesListener from './listeners/JiraInstancesListener';
+import commonListener from './listeners/CommonListener';
 
 const LOGGER = new Logger('Main');
 let mainWindow: BrowserWindow | null = null;
-let modalWindow: BrowserWindow | null = null;
+let instanceManagerWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 
 export default class AppUpdater {
@@ -123,6 +124,7 @@ const createWindow = async () => {
   // Start Listeners
   settingsListener.on();
   jiraInstancesListener.on();
+  commonListener.on();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {
@@ -167,14 +169,15 @@ ipcMain.on('writeLog', async (_event, args) => {
   });
 });
 
-const newWindow = async () => {
-  LOGGER.log(LogLevel.DEBUG, 'Create modal started');
-  if (mainWindow && !modalWindow) {
-    modalWindow = new BrowserWindow({
+const createInstanceManagerWindow = () => {
+  LOGGER.log(LogLevel.DEBUG, 'Create Instance Manager Window');
+  if (mainWindow && !instanceManagerWindow) {
+    instanceManagerWindow = new BrowserWindow({
       show: false,
-      width: 800,
-      height: 500,
+      width: 900,
+      height: 700,
       parent: mainWindow,
+      resizable: false,
       modal: true,
       icon: getAssetPath('icon.png'),
       webPreferences: {
@@ -184,19 +187,19 @@ const newWindow = async () => {
       },
     });
 
-    modalWindow.loadURL(resolveHtmlPath('/secondWindow'));
+    instanceManagerWindow.loadURL(resolveHtmlPath('/instanceManager'));
 
-    modalWindow.on('ready-to-show', () => {
-      if (!modalWindow) {
-        LOGGER.log(LogLevel.ERROR, '"modal" is not defined');
-        throw new Error('"modal" is not defined');
+    instanceManagerWindow.on('ready-to-show', () => {
+      if (!instanceManagerWindow) {
+        LOGGER.log(LogLevel.ERROR, '"Instance Manager Window" is not defined');
+        throw new Error('"Instance Manager Window" is not defined');
       }
-      LOGGER.log(LogLevel.DEBUG, 'Modal is ready');
-      modalWindow.show();
+      LOGGER.log(LogLevel.DEBUG, 'Instance Manager Window is ready');
+      instanceManagerWindow.show();
     });
 
-    modalWindow.on('closed', () => {
-      modalWindow = null;
+    instanceManagerWindow.on('closed', () => {
+      instanceManagerWindow = null;
     });
   }
 };
@@ -236,12 +239,14 @@ const openSettingsWindow = () => {
   }
 };
 
-ipcMain.on('openModal', (_event) => {
-  newWindow();
+ipcMain.on('openInstanceManagerWindow', (_event) => {
+  LOGGER.log(LogLevel.INFO, 'Open Instance Manager Window');
+  createInstanceManagerWindow();
 });
 
-ipcMain.on('closeModal', (_event) => {
-  modalWindow?.close();
+ipcMain.on('closeInstanceManagerWindow', (_event) => {
+  LOGGER.log(LogLevel.INFO, 'Close Instance Manager Window');
+  instanceManagerWindow?.close();
 });
 
 ipcMain.on('openSettingsScreen', (_event) => {
@@ -250,6 +255,7 @@ ipcMain.on('openSettingsScreen', (_event) => {
 });
 
 ipcMain.on('closeSettingsWindow', (_event) => {
+  LOGGER.log(LogLevel.INFO, 'Open Settings Screen');
   settingsWindow?.close();
 });
 
@@ -260,4 +266,9 @@ ipcMain.on('forceUpdate', (_event) => {
 ipcMain.on('redirectMainWindow', (_event, args) => {
   LOGGER.log(LogLevel.INFO, 'Redirect Main Window to: ', args);
   mainWindow?.loadURL(resolveHtmlPath(args[0]));
+});
+
+ipcMain.on('redirectInstanceManagerWindow', (_event, args) => {
+  LOGGER.log(LogLevel.INFO, 'Redirect Instace Manager Window to: ', args);
+  instanceManagerWindow?.loadURL(resolveHtmlPath(args[0]));
 });

@@ -2,13 +2,37 @@
 import { Stack, TextField } from '@mui/material';
 import { Form, FormikProvider, useFormik } from 'formik';
 import { useSelector } from 'react-redux';
+import * as Yup from 'yup';
 import { Layout, RegisterButtonsContainer } from '../../components';
+
+const isValidPath = (path) => {
+  return /^((\\|\/)[a-z0-9\s_@\-^!#$%&+={}\\[\]]+)/i.test(path);
+};
 
 const Settings = () => {
   const { settings } = useSelector((state) => state.appSettings);
   const closeSettingsWindow = () => {
     window.electron.ipcRenderer.sendMessage('closeSettingsWindow', []);
   };
+  const RegisterSchema = Yup.object().shape({
+    serverPath: Yup.string().test(
+      'isValidPath',
+      'Path is not valid',
+      (value) => {
+        return isValidPath(value);
+      }
+    ),
+    homePath: Yup.string().test('isValidPath', 'Path is not valid', (value) => {
+      return isValidPath(value);
+    }),
+    quickReloadPath: Yup.string().test(
+      'isValidPath',
+      'Quick Reload Path is not valid',
+      (value) => {
+        return isValidPath(value);
+      }
+    ),
+  });
   const formik = useFormik({
     initialValues: {
       serverPath: settings.serverPath || '',
@@ -18,20 +42,19 @@ const Settings = () => {
       quickReloadPath: settings.quickReloadPath || '',
       terminalName: settings.terminalName || '',
     },
+    validationSchema: RegisterSchema,
     onSubmit: (values, { setSubmitting }) => {
       window.electron.ipcRenderer.sendMessage('updateSettingsConfig', {
         ...values,
       });
       window.electron.ipcRenderer.once('updateSettingsConfig', (args) => {
-        console.log(args);
         window.electron.ipcRenderer.sendMessage('updateFirstLaunch', []);
         window.electron.ipcRenderer.once('updateFirstLaunch', (response) => {
-          console.log(response);
           window.electron.ipcRenderer.sendMessage('forceUpdate', []);
+          setSubmitting(false);
           closeSettingsWindow();
         });
       });
-
     },
   });
 
