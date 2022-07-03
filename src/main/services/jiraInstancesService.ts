@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { exec } from 'child_process';
 import { Logger, LogLevel, ProcessInfoTaskKeys } from '../util';
 import { ServiceResponse } from '../typings/ServiceResponse';
 import jiraInstancesModel from '../db/jiraInstances-model';
@@ -8,7 +9,6 @@ import processModel from '../db/process-model';
 // eslint-disable-next-line import/no-cycle
 import processService from './processService';
 import { JiraInstance } from '../typings/JiraInstance';
-import {exec} from "child_process";
 
 type JiraInstancesService = {
   getJiraInstances: () => Promise<ServiceResponse>;
