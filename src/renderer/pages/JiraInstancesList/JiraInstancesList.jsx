@@ -1,12 +1,13 @@
 import { Table, TableContainer, TablePagination } from '@mui/material';
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   JiraInstanceListHead,
   JiraInstanceListToolbar,
   JiraInstancesListBody,
 } from './components';
 import { Layout } from '../../components';
+import { loadAllInstances } from '../../redux/slices/jiraInstanceSlice';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', alignRight: false },
@@ -34,11 +35,43 @@ const JiraInstancesList = () => {
 
   const { jiraInstances } = useSelector((state) => state.jiraInstanceManager);
 
+  const dispatch = useDispatch();
+
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
+
+  window.electron.ipcRenderer.on('reloadInstances', () => {
+    window.electron.ipcRenderer.sendMessage('loadJiraInstances');
+    window.electron.ipcRenderer.once('loadJiraInstances', ({ response }) => {
+      const { status, data } = response;
+      if (status === 'OK') {
+        dispatch({
+          type: loadAllInstances.type,
+          payload: data,
+        });
+      } else {
+        console.log('error on load jira instances');
+      }
+    });
+  });
+
+  window.electron.ipcRenderer.on('abortInstallation', (args) => {
+    window.electron.ipcRenderer.sendMessage('cancelInstallNewInstance', args);
+    window.electron.ipcRenderer.once(
+      'cancelInstallNewInstance',
+      ({ response }) => {
+        const { status, data } = response;
+        if (status === 'OK') {
+          console.log('canceled');
+        } else {
+          console.log('error on cancel process');
+        }
+      }
+    );
+  });
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {

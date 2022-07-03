@@ -4,7 +4,7 @@ import { JiraVersionInfo } from './JiraVersionInfo';
 export interface ProcessInfo {
   _id?: string;
   task?: any;
-  status: string;
+  status: any;
   jiraInstance: JiraInstance;
   message?: string;
   jiraVersionInfo: JiraVersionInfo;

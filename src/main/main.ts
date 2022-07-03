@@ -263,6 +263,15 @@ ipcMain.on('forceUpdate', (_event) => {
   mainWindow?.webContents.send('forceUpdate');
 });
 
+ipcMain.on('reloadInstances', (_event) => {
+  mainWindow?.webContents.send('reloadInstances');
+});
+
+ipcMain.on('abortInstallation', (_event, args) => {
+  mainWindow?.webContents.send('abortInstallation', args);
+});
+
+
 ipcMain.on('redirectMainWindow', (_event, args) => {
   LOGGER.log(LogLevel.INFO, 'Redirect Main Window to: ', args);
   mainWindow?.loadURL(resolveHtmlPath(args[0]));

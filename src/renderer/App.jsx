@@ -1,4 +1,5 @@
 import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import ThemeProvider from './theme';
 import './App.css';
 import {
@@ -8,8 +9,13 @@ import {
   Settings,
   ProcessProgressInfo,
 } from './pages';
+import { CustomSnackbar } from './components';
+import { onDismissSnackBar } from './redux/slices/ui';
 
 export default function App() {
+  const { snackBar } = useSelector((state) => state.ui);
+  const dispatch = useDispatch();
+
   const RenderRoutes = () => {
     return (
       <ThemeProvider>
@@ -20,6 +26,10 @@ export default function App() {
           <Route path="/processInfo" element={<ProcessProgressInfo />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
+        <CustomSnackbar
+          snackBar={snackBar}
+          handleClose={() => dispatch({ type: onDismissSnackBar.type })}
+        />
       </ThemeProvider>
     );
   };

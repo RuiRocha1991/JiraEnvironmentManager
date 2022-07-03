@@ -18,20 +18,20 @@ export const logDir: string = path.join(userDataPath, path.sep, 'logs');
 export let logger: any;
 
 export const StatusProgress = {
-  STARTING: 'Starting',
-  ABORTED: 'Aborted',
-  PROCESSING: 'Processing',
-  FINISHED: 'Finished',
-  CANCELED: 'Canceled',
+  STARTING: { name: 'Starting', isFinal: false, isError: false },
+  ABORTED: { name: 'Aborted', isFinal: true, isError: true },
+  PROCESSING: { name: 'Processing', isFinal: false, isError: false },
+  FINISHED: { name: 'Finished', isFinal: true, isError: false },
+  CANCELED: { name: 'Canceled', isFinal: true, isError: true },
 };
 
 export const ProcessInfoTaskKeys = {
   START: 'Start',
   DOWNLOAD: 'Download',
-  CREATE_FOLDER: 'Create Folder',
-  UNZIP: 'Unzio',
-  MOVE_FOLDER: 'Move Folder',
-  CLEAN_TEMP: 'Clean Temp',
+  CREATE_FOLDER: 'CreateFolder',
+  UNZIP: 'Unzip',
+  MOVE_FOLDER: 'MoveFolder',
+  CLEAN_TEMP: 'CleanTemp',
 };
 
 export class Logger {

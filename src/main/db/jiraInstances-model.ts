@@ -5,6 +5,7 @@ import { Logger, LogLevel } from '../util';
 type JiraInstancesModel = {
   addJiraInstance: (jiraInstance: JiraInstance) => Promise<JiraInstance>;
   getJiraInstances: () => Promise<JiraInstance[]>;
+  getInstanceById: (id: string) => Promise<JiraInstance>;
 };
 
 const LOGGER = new Logger('JiraInstances-Model');
@@ -59,9 +60,22 @@ const getJiraInstances = async () => {
   );
 };
 
+const getInstanceById = async (id: string) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Get Instance By ID: {0}', [id]);
+    const instance = (await mainDB.jiraInstances.findOne({ _id: id })) || {};
+    LOGGER.log(LogLevel.DEBUG, 'Get Instance By ID: {0}', [instance]);
+    return instance;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Get Instance By ID: {0}', [e.message]);
+    throw e;
+  }
+};
+
 const jiraInstancesModel: JiraInstancesModel = {
   addJiraInstance,
   getJiraInstances,
+  getInstanceById,
 };
 
 export default jiraInstancesModel;

@@ -1,10 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  progressInfo: {
-    process: undefined,
-    isInProgress: false,
-  },
+  process: undefined,
 };
 
 export const processInfoSlice = createSlice({
@@ -12,22 +9,18 @@ export const processInfoSlice = createSlice({
   initialState,
   reducers: {
     startProcess: (state, { payload }) => {
-      state.progressInfo = {
-        process: payload,
-        isInProgress: true,
+      state.process = {
+        ...payload,
       };
     },
     updateProcess: (state, { payload }) => {
-      state.progressInfo = {
-        ...state.processInfo,
-        process: payload,
+      state.process = {
+        ...state.process,
+        ...payload,
       };
     },
     finishProcess: (state) => {
-      state.progressInfo = {
-        process: undefined,
-        isInProgress: false,
-      };
+      state.process = undefined;
     },
   },
 });

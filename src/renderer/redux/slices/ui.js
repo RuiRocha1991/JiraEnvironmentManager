@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  isFetching: false,
   snackBar: {
     isOpen: false,
     message: '',
@@ -24,7 +23,6 @@ export const uiSlice = createSlice({
       state.snackBar = {
         isOpen: false,
         message: '',
-        isSuccess: false,
       };
     },
   },

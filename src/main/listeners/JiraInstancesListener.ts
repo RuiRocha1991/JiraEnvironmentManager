@@ -4,6 +4,7 @@ import jiraInstancesService from '../services/jiraInstancesService';
 import { JiraInstance } from '../typings/JiraInstance';
 import { ProcessInfo } from '../typings/ProcessInfo';
 import { JiraVersionInfo } from '../typings/JiraVersionInfo';
+import processService from '../services/processService';
 
 type JiraInstancesListener = {
   on: () => void;
@@ -35,7 +36,6 @@ const on = () => {
       size: args[0].jiraVersion.size,
     };
     const processInfo = <ProcessInfo>{
-      progress: 0,
       status: StatusProgress.STARTING,
       jiraInstance,
       jiraVersionInfo,
@@ -51,6 +51,30 @@ const on = () => {
     const response = await jiraInstancesService.addNewInstance(processInfo);
     LOGGER.log(LogLevel.DEBUG, 'Add New Instance: {0}', [response]);
     event.reply('addNewInstance', { response });
+  });
+
+  ipcMain.on('fetchProcessInfo', async (event, args) => {
+    LOGGER.log(LogLevel.INFO, 'Fetch Process Info');
+    const response = await processService.getProcessById(args[0]);
+    LOGGER.log(LogLevel.DEBUG, 'Fetch Process Info: {0}', [response]);
+    event.reply('fetchProcessInfo', { response });
+  });
+
+  ipcMain.on('openEditFile', async (_event, args) => {
+    LOGGER.log(LogLevel.INFO, 'Open Edit File to: {0}', args);
+    jiraInstancesService.openEditor(args[0]);
+  });
+
+  ipcMain.on('deleteProcess', async (_event, args) => {
+    LOGGER.log(LogLevel.INFO, 'Delete process: {0}', args);
+    const response = processService.deleteProcessById(args[0]);
+    LOGGER.log(LogLevel.DEBUG, 'Delete process: {0}', [response]);
+  });
+
+  ipcMain.on('cancelInstallNewInstance', async (event, args) => {
+    LOGGER.log(LogLevel.INFO, 'Cancel Install New Intance: {0}', args);
+    const response = await processService.cancelProcess(args[0]);
+    event.reply('cancelInstallNewInstance', { response });
   });
 };
 

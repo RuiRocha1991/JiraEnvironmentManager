@@ -16,8 +16,8 @@ const ButtonContainer = styled('div')(() => ({
 }));
 
 const RegisterButtonsContainer = (props) => {
-  const { disabled, closeWindow, isSubmitting } = props;
-
+  const { disabled, closeWindow, isSubmitting, onSubmit, disableSubmit } = props;
+  const type = !onSubmit ? 'submit' : 'button';
   return (
     <Container>
       <ButtonContainer>
@@ -32,11 +32,13 @@ const RegisterButtonsContainer = (props) => {
           Cancel
         </Button>
         <LoadingButton
+          disabled={disableSubmit}
           fullWidth
           size="large"
-          type="submit"
+          type={type}
           variant="contained"
           loading={isSubmitting}
+          onClick={onSubmit}
           sx={{ ml: 1 }}
         >
           Save
@@ -52,8 +54,12 @@ RegisterButtonsContainer.propTypes = {
   disabled: PropTypes.bool,
   closeWindow: PropTypes.func.isRequired,
   isSubmitting: PropTypes.bool.isRequired,
+  onSubmit: PropTypes.func,
+  disableSubmit: PropTypes.bool,
 };
 
 RegisterButtonsContainer.defaultProps = {
   disabled: false,
+  onSubmit: undefined,
+  disableSubmit: false,
 };

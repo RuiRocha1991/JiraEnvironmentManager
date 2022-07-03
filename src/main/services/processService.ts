@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import path from 'path';
 import * as fs from 'fs';
 import { spawn } from 'child_process';
@@ -14,76 +15,96 @@ import {
 import processModel from '../db/process-model';
 import jiraInstancesModel from '../db/jiraInstances-model';
 import fileUtils from '../fileUtils';
+import { ServiceResponse } from '../typings/ServiceResponse';
 
 type ProcessService = {
   installInstance: (processInfo: ProcessInfo) => void;
+  getProcessById: (id: string) => Promise<ServiceResponse>;
+  deleteProcessById: (id: string) => Promise<ServiceResponse>;
+  updateProcess: (process: ProcessInfo) => Promise<ServiceResponse>;
+  cancelProcess: (processId: string) => Promise<ServiceResponse>;
 };
 
 const TEMP_PATH = path.join(userDataPath, 'temp', path.sep);
 
 const LOGGER = new Logger('ProcessService');
 
-const downloadInstance = async (processInfo: ProcessInfo) => {
+let downloadProcess: any = null;
+
+const getProcessById = async (id: string) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Get Process By ID: {0}', [id]);
+    const response = <ServiceResponse>{
+      status: 'OK',
+      data: await processModel.getById(id),
+    };
+    LOGGER.log(LogLevel.DEBUG, 'Get Process By ID: {0}', [response]);
+    return response;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Get Process By ID: {0}', [e.message]);
+    return <ServiceResponse>{
+      status: 'NOK',
+      message: `Get Process By ID: ${e.message}`,
+    };
+  }
+};
+
+let mainProcess: ProcessInfo;
+
+const downloadInstance = async () => {
   LOGGER.log(LogLevel.INFO, 'Download Instance: {0}', [
-    processInfo.jiraVersionInfo.zipUrl,
+    mainProcess.jiraVersionInfo.zipUrl,
   ]);
   const finalSize = fileUtils.humanReadableToBytes(
-    processInfo.jiraVersionInfo.size
+    mainProcess.jiraVersionInfo.size
   );
   return new Promise((resolve, reject) => {
-    const downloadProcess = spawn(
+    downloadProcess = spawn(
       'curl',
       [
-        `${processInfo.jiraVersionInfo.zipUrl}`,
+        `${mainProcess.jiraVersionInfo.zipUrl}`,
         '-L',
         '-o',
-        `${TEMP_PATH}${processInfo.jiraInstance.name}.tar.gz`,
+        `${TEMP_PATH}${mainProcess.jiraInstance.name}.tar.gz`,
       ],
       {
         cwd: TEMP_PATH,
       }
     );
 
-    downloadProcess.on('error', (error) => {
+    downloadProcess.on('error', async (error: any) => {
       LOGGER.log(LogLevel.ERROR, 'Download error: {0}', [error]);
-      processInfo.status = StatusProgress.ABORTED;
-      processInfo.message = `Install Instance: ${JSON.stringify(error)}`;
-      processModel.update(processInfo);
-      reject(new Error(`Download error: ${JSON.stringify(error)}`));
+      mainProcess.status = StatusProgress.ABORTED;
+      mainProcess.message = `Install Instance: ${JSON.stringify(error)}`;
+      await processModel.update(mainProcess);
+      return reject(new Error(`Download error: ${JSON.stringify(error)}`));
     });
 
-    downloadProcess.stdout.on('data', (data) => {
-      LOGGER.log(LogLevel.DEBUG, 'Download Progress: {0}', [data]);
+    downloadProcess.stdout.on('data', (data: any) => {
+      LOGGER.log(LogLevel.WARNING, 'Download Progress: {0}', [data]);
     });
-    downloadProcess.stderr.on('data', async (_data) => {
+    downloadProcess.stderr.on('data', async (_data: any) => {
       const actualSize: number = await fileUtils.calculateFolderSize(TEMP_PATH);
       const result = Math.ceil((actualSize * 100) / finalSize);
-      processInfo.task = {
-        ...processInfo.task,
-        [ProcessInfoTaskKeys.DOWNLOAD]: result < 100 ? result : 99,
-      };
-      processModel.update(processInfo);
-      LOGGER.log(LogLevel.DEBUG, 'Download Progress: {0}%', [
-        processInfo.task[ProcessInfoTaskKeys.DOWNLOAD],
-      ]);
+      LOGGER.log(LogLevel.DEBUG, 'Download Progress: {0}', [result]);
+      mainProcess.task[ProcessInfoTaskKeys.DOWNLOAD] =
+        result < 100 ? result : 99;
     });
 
-    downloadProcess.on('close', (code) => {
-      processInfo.task = {
-        ...processInfo.task,
-        [ProcessInfoTaskKeys.DOWNLOAD]: 100,
-      };
-      processModel.update(processInfo);
+    downloadProcess.on('close', (code: any) => {
       LOGGER.log(LogLevel.DEBUG, 'Download completed {0}', [code]);
-      resolve(code);
+      if (code === 0) {
+        return resolve(code);
+      }
+      return reject(new Error('Download Canceled'));
     });
   });
 };
 
-const createFolders = (processInfo: ProcessInfo) => {
+const createFolders = () => {
   LOGGER.log(LogLevel.DEBUG, 'Create Instance Folder');
-  const serverPath = `${processInfo.jiraInstance.serverPath}${processInfo.jiraInstance.name}`;
-  const homePath = `${processInfo.jiraInstance.homePath}${processInfo.jiraInstance.name}`;
+  const serverPath = `${mainProcess.jiraInstance.serverPath}${mainProcess.jiraInstance.name}`;
+  const homePath = `${mainProcess.jiraInstance.homePath}${mainProcess.jiraInstance.name}`;
   if (!fs.existsSync(serverPath)) {
     LOGGER.log(LogLevel.DEBUG, 'Create folder: {0}', [serverPath]);
     fs.mkdirSync(serverPath);
@@ -94,9 +115,9 @@ const createFolders = (processInfo: ProcessInfo) => {
   }
 };
 
-const unzip = (processInfo: ProcessInfo) => {
+const unzip = () => {
   LOGGER.log(LogLevel.INFO, 'Unzip and Move to server folder: {0}', [
-    processInfo,
+    mainProcess,
   ]);
 
   return new Promise((resolve, reject) => {
@@ -105,7 +126,7 @@ const unzip = (processInfo: ProcessInfo) => {
       [
         '--extract',
         '--file',
-        `${TEMP_PATH}${processInfo.jiraInstance.name}.tar.gz`,
+        `${TEMP_PATH}${mainProcess.jiraInstance.name}.tar.gz`,
         '-C',
         TEMP_PATH,
       ],
@@ -138,13 +159,13 @@ const getDirectories = () =>
     .filter((dirent) => dirent.isDirectory())
     .map((dirent) => dirent.name);
 
-const moveToServerFolder = async (processInfo: ProcessInfo) => {
-  LOGGER.log(LogLevel.INFO, 'Move to server folder: {0}', [processInfo]);
+const moveToServerFolder = async () => {
+  LOGGER.log(LogLevel.INFO, 'Move to server folder: {0}', [mainProcess]);
   const tempDirectoryName = getDirectories()[0];
   try {
     await rename(
       `${TEMP_PATH}${tempDirectoryName}`,
-      `${processInfo.jiraInstance.serverPath}${processInfo.jiraInstance.name}`
+      `${mainProcess.jiraInstance.serverPath}${mainProcess.jiraInstance.name}`
     );
     LOGGER.log(LogLevel.DEBUG, 'Move to server folder done');
   } catch (e: any) {
@@ -172,6 +193,24 @@ const cleanTempFolder = async () => {
   }
 };
 
+const updateListener = async () => {
+  console.log('call update listener: ', new Date().getMilliseconds());
+  if (!mainProcess.status.isError) {
+    if (!mainProcess.status.isFinal) {
+      await processModel.update(mainProcess);
+      setTimeout(() => {
+        try {
+          updateListener();
+        } catch (e: any) {
+          throw new Error(`The process was ${mainProcess.status.name}`);
+        }
+      }, 5000);
+    }
+  } else {
+    throw new Error(`The process was ${mainProcess.status.name}`);
+  }
+};
+
 const installInstance = async (processInfo: ProcessInfo) => {
   LOGGER.log(LogLevel.INFO, 'Install Instance: {0}', [processInfo]);
   if (!fs.existsSync(TEMP_PATH)) {
@@ -179,51 +218,108 @@ const installInstance = async (processInfo: ProcessInfo) => {
     fs.mkdirSync(TEMP_PATH);
   }
   try {
-    processInfo.status = StatusProgress.PROCESSING;
-    processModel.update(processInfo);
-    await downloadInstance(processInfo);
-    createFolders(processInfo);
-    processInfo.task = {
-      ...processInfo.task,
-      [ProcessInfoTaskKeys.CREATE_FOLDER]: 100,
-    };
-    processModel.update(processInfo);
-    await unzip(processInfo);
-    processInfo.task = {
-      ...processInfo.task,
-      [ProcessInfoTaskKeys.UNZIP]: 100,
-    };
-    processModel.update(processInfo);
-    await moveToServerFolder(processInfo);
-    processInfo.task = {
-      ...processInfo.task,
-      [ProcessInfoTaskKeys.MOVE_FOLDER]: 100,
-    };
-    processModel.update(processInfo);
+    mainProcess = processInfo;
+    mainProcess.status = StatusProgress.PROCESSING;
+    updateListener();
+    await downloadInstance();
+    mainProcess.task[ProcessInfoTaskKeys.DOWNLOAD] = 100;
+    createFolders();
+    mainProcess.task[ProcessInfoTaskKeys.CREATE_FOLDER] = 100;
+    await unzip();
+    mainProcess.task[ProcessInfoTaskKeys.UNZIP] = 100;
+    await moveToServerFolder();
+    mainProcess.task[ProcessInfoTaskKeys.MOVE_FOLDER] = 100;
     cleanTempFolder();
-    processInfo.task = {
-      ...processInfo.task,
-      [ProcessInfoTaskKeys.CLEAN_TEMP]: 100,
-    };
-
+    mainProcess.task[ProcessInfoTaskKeys.CLEAN_TEMP] = 100;
     const instance = await jiraInstancesModel.addJiraInstance(
-      processInfo.jiraInstance
+      mainProcess.jiraInstance
     );
-    processInfo.status = StatusProgress.FINISHED;
-    // eslint-disable-next-line no-underscore-dangle
-    processInfo.jiraInstanceID = instance._id;
-    processModel.update(processInfo);
+
+    mainProcess.status = StatusProgress.FINISHED;
+    mainProcess.jiraInstanceID = instance._id;
+    processModel.update(mainProcess);
   } catch (e: any) {
     LOGGER.log(LogLevel.ERROR, 'Install Instance: {0}', [e.message]);
-    processInfo.status = StatusProgress.ABORTED;
-    processInfo.message = `Install Instance: ${e.message}`;
-    console.log(processInfo);
-    processModel.update(processInfo);
+    downloadProcess.kill();
+    cleanTempFolder();
+    if (!mainProcess.status.isError) {
+      mainProcess.status = StatusProgress.ABORTED;
+    }
+    processModel.update(mainProcess);
+  }
+};
+
+const deleteProcessById = async (id: string) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Delete Process By ID: {0}', [id]);
+    const response = <ServiceResponse>{
+      status: 'OK',
+      data: await processModel.deleteProcess(id),
+    };
+    LOGGER.log(LogLevel.DEBUG, 'Delete Process By ID: {0}', [response]);
+    return response;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Delete Process By ID: {0}', [e.message]);
+    return <ServiceResponse>{
+      status: 'NOK',
+      message: `Get Process By ID: ${e.message}`,
+    };
+  }
+};
+
+const updateProcess = async (process: ProcessInfo) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Update Process: {0}', [process]);
+    const response = <ServiceResponse>{
+      status: 'OK',
+      data: await processModel.update(process),
+    };
+    LOGGER.log(LogLevel.DEBUG, 'Update Process: {0}', [response]);
+    return response;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Update Process: {0}', [e.message]);
+    return <ServiceResponse>{
+      status: 'NOK',
+      message: `Get Process By ID: ${e.message}`,
+    };
+  }
+};
+
+const cancelProcess = async (processId: string) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Cancel Process: {0}', [processId]);
+    let response;
+    if (!mainProcess.status.isFinal) {
+      downloadProcess.kill();
+      mainProcess.status = StatusProgress.CANCELED;
+      mainProcess.message = 'Canceled By User';
+      response = <ServiceResponse>{
+        status: 'OK',
+        data: await processModel.update(mainProcess),
+      };
+      LOGGER.log(LogLevel.DEBUG, 'Cancel Process: {0}', [response]);
+    }
+    response = <ServiceResponse>{
+      status: 'NOK',
+      message: 'Process was not canceled',
+    };
+    LOGGER.log(LogLevel.DEBUG, 'Process was not canceled');
+    return response;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Cancel Process: {0}', [e.message]);
+    return <ServiceResponse>{
+      status: 'NOK',
+      message: `Cancel Process: ${e.message}`,
+    };
   }
 };
 
 const processService: ProcessService = {
   installInstance,
+  getProcessById,
+  deleteProcessById,
+  updateProcess,
+  cancelProcess,
 };
 
 export default processService;
