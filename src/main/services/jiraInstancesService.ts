@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
@@ -9,6 +10,7 @@ import processModel from '../db/process-model';
 // eslint-disable-next-line import/no-cycle
 import processService from './processService';
 import { JiraInstance } from '../typings/JiraInstance';
+import FileUtils from '../fileUtils';
 
 type JiraInstancesService = {
   getJiraInstances: () => Promise<ServiceResponse>;
@@ -22,9 +24,36 @@ const LOGGER = new Logger('JiraInstancesService');
 const getJiraInstances = async () => {
   try {
     LOGGER.log(LogLevel.DEBUG, 'Get Jira Instances');
+    const instances = await jiraInstancesModel.getJiraInstances();
+    const finalInstance = await Promise.all(
+      instances.map(async (instance) => {
+        const homeSize = FileUtils.convertSizeToHumanReadable(
+          FileUtils.calculateFolderSize(`${instance.homePath}${instance.name}`)
+        );
+        const serverSize = FileUtils.convertSizeToHumanReadable(
+          FileUtils.calculateFolderSize(
+            `${instance.serverPath}${instance.name}`
+          )
+        );
+
+        return <JiraInstance>{
+          _id: instance._id,
+          name: instance.name,
+          description: instance.description,
+          serverPath: instance.serverPath,
+          homePath: instance.homePath,
+          homeSize,
+          serverSize,
+          quickReload: instance.quickReload,
+          pid: instance.pid,
+          lastRunning: instance.lastRunning,
+          isRunning: instance.isRunning,
+        };
+      })
+    );
     const response = <ServiceResponse>{
       status: 'OK',
-      data: await jiraInstancesModel.getJiraInstances(),
+      data: finalInstance,
     };
     LOGGER.log(LogLevel.DEBUG, 'Get Jira Instances: {0}', [response]);
     return response;

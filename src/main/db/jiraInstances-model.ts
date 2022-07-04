@@ -13,6 +13,8 @@ const LOGGER = new Logger('JiraInstances-Model');
 const addJiraInstance = async (jiraInstance: JiraInstance) => {
   LOGGER.log(LogLevel.DEBUG, 'Add Jira instance: {0}', [jiraInstance]);
   try {
+    jiraInstance.lastRunning = `${Date.now()}`;
+    jiraInstance.pid = 0;
     const instance = await mainDB.jiraInstances.insert(jiraInstance);
 
     const environment = <JiraInstance>{
@@ -20,9 +22,7 @@ const addJiraInstance = async (jiraInstance: JiraInstance) => {
       _id: instance._id,
       name: instance.name,
       description: instance.description,
-      serverSize: instance.serverSize,
       serverPath: instance.serverPath,
-      homeSize: instance.homeSize,
       homePath: instance.homePath,
       quickReload: instance.quickReload,
       pid: instance.pid,
@@ -54,7 +54,9 @@ const getJiraInstances = async () => {
         homePath: instance.homePath,
         quickReload: instance.quickReload,
         pid: instance.pid,
-        lastRunning: instance.lastRunning,
+        lastRunning: new Date(
+          parseInt(instance.lastRunning, 10)
+        ).toLocaleString('en-GB'),
         isRunning: instance.isRunning,
       }
   );

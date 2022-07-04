@@ -1,6 +1,7 @@
 import { Table, TableContainer, TablePagination } from '@mui/material';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import emitter from 'events';
 import {
   JiraInstanceListHead,
   JiraInstanceListToolbar,
@@ -43,7 +44,7 @@ const JiraInstancesList = () => {
     setOrderBy(property);
   };
 
-  window.electron.ipcRenderer.on('reloadInstances', () => {
+  window.electron.ipcRenderer.once('reloadInstances', () => {
     window.electron.ipcRenderer.sendMessage('loadJiraInstances');
     window.electron.ipcRenderer.once('loadJiraInstances', ({ response }) => {
       const { status, data } = response;
@@ -58,7 +59,7 @@ const JiraInstancesList = () => {
     });
   });
 
-  window.electron.ipcRenderer.on('abortInstallation', (args) => {
+  window.electron.ipcRenderer.once('abortInstallation', (args) => {
     window.electron.ipcRenderer.sendMessage('cancelInstallNewInstance', args);
     window.electron.ipcRenderer.once(
       'cancelInstallNewInstance',

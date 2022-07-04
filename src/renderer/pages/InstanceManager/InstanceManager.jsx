@@ -43,9 +43,16 @@ const InstanceManager = () => {
     name: Yup.string()
       .max(50, 'Too Long!')
       .required('Name is required')
-      .test('isValid', 'Name must be unique', (value) => {
-        return !usedNames.includes(value);
-      }),
+      .test(
+        'isUnique',
+        'Name must be unique',
+        (value) => !usedNames.includes(value)
+      )
+      .test(
+        'hasWhitespaces',
+        'Name must not contain white spaces',
+        (value) => !/\s/.test(value)
+      ),
     description: Yup.string().max(100, 'Too Long!'),
     serverPath: Yup.string()
       .required('Server Path is required')

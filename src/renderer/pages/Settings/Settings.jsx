@@ -25,13 +25,7 @@ const Settings = () => {
     homePath: Yup.string().test('isValidPath', 'Path is not valid', (value) => {
       return isValidPath(value);
     }),
-    quickReloadPath: Yup.string().test(
-      'isValidPath',
-      'Quick Reload Path is not valid',
-      (value) => {
-        return isValidPath(value);
-      }
-    ),
+    quickReloadPath: Yup.string(),
   });
   const formik = useFormik({
     initialValues: {

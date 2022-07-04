@@ -2,12 +2,12 @@ export interface JiraInstance {
   _id?: string;
   name: string;
   description: string;
-  serverSize?: number;
+  serverSize?: string;
   serverPath: string;
-  homeSize?: number;
+  homeSize?: string;
   homePath: string;
   quickReload: boolean;
   pid?: number;
-  lastRunning?: number;
+  lastRunning?: string;
   isRunning: boolean;
 }
