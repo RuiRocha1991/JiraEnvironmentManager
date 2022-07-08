@@ -5,6 +5,7 @@ import { JiraInstance } from '../typings/JiraInstance';
 import { ProcessInfo } from '../typings/ProcessInfo';
 import { JiraVersionInfo } from '../typings/JiraVersionInfo';
 import processService from '../services/processService';
+import { ServiceResponse } from "../typings/ServiceResponse";
 
 type JiraInstancesListener = {
   on: () => void;
@@ -75,6 +76,28 @@ const on = () => {
     LOGGER.log(LogLevel.INFO, 'Cancel Install New Intance: {0}', args);
     const response = await processService.cancelProcess(args[0]);
     event.reply('cancelInstallNewInstance', { response });
+  });
+
+  ipcMain.on('startOrStopInstance', async (event, args) => {
+    try {
+      LOGGER.log(LogLevel.INFO, 'Start or Stop Instance: {0}', args);
+      const result = await jiraInstancesService.startOrStopInstance(args[0]);
+      const response = <ServiceResponse>{
+        status: 'OK',
+        data: result,
+      };
+      event.reply('startOrStopInstance', response);
+    } catch (e: any) {
+      LOGGER.log(LogLevel.ERROR, 'Start or Stop Instance: {0} - {1}', [
+        ...args,
+        e,
+      ]);
+      const response = <ServiceResponse>{
+        status: 'NOK',
+        message: e.message,
+      };
+      event.reply('startOrStopInstance', response);
+    }
   });
 };
 

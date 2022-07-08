@@ -4,7 +4,7 @@
   "homepage": "https://github.com/RuiRocha1991/JiraEnvironmentManager#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RuiRocha1991/JiraEnvironmentManager.git"
+    "url": "https://github.com/RuiRocha1991/JiraEnvironmentManager"
   },
   "license": "MIT",
   "main": "./src/main/main.ts",
@@ -192,6 +192,7 @@
     ],
     "afterSign": ".erb/scripts/notarize.js",
     "mac": {
+      "category": "public.app-category.developer-tools",
       "target": {
         "target": "default",
         "arch": [

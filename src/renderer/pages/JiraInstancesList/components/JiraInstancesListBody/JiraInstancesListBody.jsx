@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import {
   Checkbox,
   Stack,
@@ -8,8 +9,15 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { filter } from 'lodash';
-import { JiraInstanceMoreMenu } from '../index';
+
+import { useDispatch } from 'react-redux';
 import { SearchNotFound } from '../../../../components';
+import { SplitButton } from './components';
+import {
+  startingOrStoppingInstance,
+  startOrStopInstance,
+} from '../../../../redux/slices/jiraInstanceSlice';
+import { onToggleSnackBar } from '../../../../redux/slices/ui';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -54,6 +62,53 @@ const JiraInstancesListBody = (props) => {
     selected,
     handleClick,
   } = props;
+
+  const dispatch = useDispatch();
+
+  const handleStartOrStopInstance = (instanceId) => {
+    dispatch({
+      type: startingOrStoppingInstance.type,
+      payload: { instanceId, isStartingOrStopping: true },
+    });
+    const instance = jiraInstances.find((i) => i.isRunning);
+    if (instance && instance._id !== instanceId) {
+      dispatch({
+        type: onToggleSnackBar.type,
+        payload: {
+          message: `The jira: ${instance.name} is Running`,
+          status: 'NOK',
+        },
+      });
+      dispatch({
+        type: startingOrStoppingInstance.type,
+        payload: { instanceId, isStartingOrStopping: false },
+      });
+    } else {
+      window.electron.ipcRenderer.sendMessage('startOrStopInstance', [
+        instanceId,
+      ]);
+      window.electron.ipcRenderer.once('startOrStopInstance', (args) => {
+        if (args.status === 'OK') {
+          dispatch({
+            type: startOrStopInstance.type,
+            payload: args.data,
+          });
+          dispatch({
+            type: startingOrStoppingInstance.type,
+            payload: { instanceId, isStartingOrStopping: false },
+          });
+        } else {
+          dispatch({
+            type: onToggleSnackBar.type,
+            payload: {
+              message: args.message,
+              status: 'NOK',
+            },
+          });
+        }
+      });
+    }
+  };
 
   const { page, rowsPerPage } = pagination;
   const emptyRows =
@@ -111,9 +166,16 @@ const JiraInstancesListBody = (props) => {
                 <TableCell align="left">{homeSize}</TableCell>
                 <TableCell align="left">{quickReload ? 'Yes' : 'No'}</TableCell>
                 <TableCell align="right">{pid}</TableCell>
-                <TableCell align="left">{lastRunning}</TableCell>
+                <TableCell align="left">
+                  {new Date(parseInt(lastRunning, 10)).toLocaleString('en-GB')}
+                </TableCell>
                 <TableCell align="right">
-                  <JiraInstanceMoreMenu />
+                  <SplitButton
+                    instanceId={_id}
+                    isRunning={isRunning}
+                    instanceUi={row.ui}
+                    handleStartingOrStoppingInstance={handleStartOrStopInstance}
+                  />
                 </TableCell>
               </TableRow>
             );

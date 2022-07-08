@@ -6,6 +6,8 @@ type JiraInstancesModel = {
   addJiraInstance: (jiraInstance: JiraInstance) => Promise<JiraInstance>;
   getJiraInstances: () => Promise<JiraInstance[]>;
   getInstanceById: (id: string) => Promise<JiraInstance>;
+  getInstanceRunning: () => Promise<JiraInstance>;
+  updateInstance: (jiraIntance: JiraInstance) => Promise<number>;
 };
 
 const LOGGER = new Logger('JiraInstances-Model');
@@ -54,9 +56,7 @@ const getJiraInstances = async () => {
         homePath: instance.homePath,
         quickReload: instance.quickReload,
         pid: instance.pid,
-        lastRunning: new Date(
-          parseInt(instance.lastRunning, 10)
-        ).toLocaleString('en-GB'),
+        lastRunning: instance.lastRunning,
         isRunning: instance.isRunning,
       }
   );
@@ -74,10 +74,47 @@ const getInstanceById = async (id: string) => {
   }
 };
 
+const getInstanceRunning = async () => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Get Instance Running');
+    const instance =
+      (await mainDB.jiraInstances.findOne({ isRunning: true })) || undefined;
+    LOGGER.log(LogLevel.DEBUG, 'Get Instance Running: {0}', [instance]);
+    return instance;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Get Instance Running: {0}', [e.message]);
+    throw e;
+  }
+};
+
+const updateInstance = async (jiraInstance: JiraInstance) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Update instance {0}', [jiraInstance]);
+    const rowsUpdated = await mainDB.jiraInstances.update(
+      // eslint-disable-next-line no-underscore-dangle
+      { _id: jiraInstance._id },
+      { $set: { ...jiraInstance } },
+      { upsert: true }
+    );
+    LOGGER.log(LogLevel.DEBUG, 'Instance Info Updated: {0} rows', [
+      rowsUpdated,
+    ]);
+    return rowsUpdated;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Update Instance Info: {0} - {1}', [
+      process,
+      e.message,
+    ]);
+    throw e;
+  }
+};
+
 const jiraInstancesModel: JiraInstancesModel = {
   addJiraInstance,
   getJiraInstances,
   getInstanceById,
+  getInstanceRunning,
+  updateInstance,
 };
 
 export default jiraInstancesModel;

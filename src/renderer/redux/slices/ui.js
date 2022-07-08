@@ -23,6 +23,7 @@ export const uiSlice = createSlice({
       state.snackBar = {
         isOpen: false,
         message: '',
+        isSuccess: false,
       };
     },
   },
