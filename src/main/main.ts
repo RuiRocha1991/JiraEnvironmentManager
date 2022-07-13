@@ -255,7 +255,7 @@ ipcMain.on('openSettingsScreen', (_event) => {
 });
 
 ipcMain.on('closeSettingsWindow', (_event) => {
-  LOGGER.log(LogLevel.INFO, 'Open Settings Screen');
+  LOGGER.log(LogLevel.INFO, 'close Settings Screen');
   settingsWindow?.close();
 });
 

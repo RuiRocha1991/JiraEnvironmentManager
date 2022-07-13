@@ -42,7 +42,7 @@ const Settings = () => {
         ...values,
       });
       window.electron.ipcRenderer.once('updateSettingsConfig', (args) => {
-        if (settings) {
+        if (!settings.isFirstLaunch) {
           window.electron.ipcRenderer.sendMessage(
             'forceUpdateAndLoadSettings',
             []
