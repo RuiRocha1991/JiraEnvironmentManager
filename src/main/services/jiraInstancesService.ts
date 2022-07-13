@@ -11,6 +11,7 @@ import processModel from '../db/process-model';
 import processService from './processService';
 import { JiraInstance } from '../typings/JiraInstance';
 import FileUtils from '../fileUtils';
+import settingsService from "./settingsService";
 
 type JiraInstancesService = {
   getJiraInstances: () => Promise<ServiceResponse>;
@@ -233,7 +234,8 @@ const openAppLogs = async (instance: JiraInstance) => {
       fileExist = isFileExists(file);
     }
   }, 2000);
-  const command = `open -a Terminal ${path.join(
+  const terminalApp = await settingsService.getTerminalApp();
+  const command = `open -a ${terminalApp} ${path.join(
     instance.homePath,
     instance.name,
     'log/'

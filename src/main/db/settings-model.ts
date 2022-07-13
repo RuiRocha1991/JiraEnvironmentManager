@@ -6,6 +6,7 @@ type SettingsModel = {
   getIsFirstLaunch: () => Promise<boolean>;
   updateSettings: (setting: Settings) => Promise<number>;
   getAllSettings: () => Promise<Settings[]>;
+  getTerminalApp: () => Promise<string>;
 };
 
 const LOGGER = new Logger('Settings-Model');
@@ -53,10 +54,24 @@ const getAllSettings = async () => {
   }
 };
 
+const getTerminalApp = async () => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Get Terminal App');
+    const { terminalName = 'Terminal' } =
+      (await mainDB.settings.findOne({})) || {};
+    LOGGER.log(LogLevel.DEBUG, 'Get Terminal App: {0}', [terminalName]);
+    return terminalName;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Get Terminal App: {0}', [e.message]);
+    throw e;
+  }
+};
+
 const settingsModel: SettingsModel = {
   getIsFirstLaunch,
   updateSettings,
   getAllSettings,
+  getTerminalApp,
 };
 
 export default settingsModel;
