@@ -118,7 +118,7 @@ const createWindow = async () => {
     mainWindow = null;
   });
   LOGGER.log(LogLevel.DEBUG, 'Create menu');
-  const menuBuilder = new MenuBuilder(mainWindow);
+  const menuBuilder = new MenuBuilder(mainWindow, ipcMain);
   menuBuilder.buildMenu();
 
   // Start Listeners
@@ -261,6 +261,9 @@ ipcMain.on('closeSettingsWindow', (_event) => {
 
 ipcMain.on('forceUpdate', (_event) => {
   mainWindow?.webContents.send('forceUpdate');
+});
+ipcMain.on('forceUpdateAndLoadSettings', (_event) => {
+  mainWindow?.webContents.send('forceUpdateAndLoadSettings');
 });
 
 ipcMain.on('reloadInstances', (_event) => {

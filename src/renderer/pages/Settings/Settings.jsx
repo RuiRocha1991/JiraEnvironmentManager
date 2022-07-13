@@ -42,12 +42,21 @@ const Settings = () => {
         ...values,
       });
       window.electron.ipcRenderer.once('updateSettingsConfig', (args) => {
-        window.electron.ipcRenderer.sendMessage('updateFirstLaunch', []);
-        window.electron.ipcRenderer.once('updateFirstLaunch', (response) => {
-          window.electron.ipcRenderer.sendMessage('forceUpdate', []);
+        if (settings) {
+          window.electron.ipcRenderer.sendMessage(
+            'forceUpdateAndLoadSettings',
+            []
+          );
           setSubmitting(false);
           closeSettingsWindow();
-        });
+        } else {
+          window.electron.ipcRenderer.sendMessage('updateFirstLaunch', []);
+          window.electron.ipcRenderer.once('updateFirstLaunch', (response) => {
+            window.electron.ipcRenderer.sendMessage('forceUpdate', []);
+            setSubmitting(false);
+            closeSettingsWindow();
+          });
+        }
       });
     },
   });

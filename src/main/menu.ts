@@ -5,6 +5,7 @@ import {
   BrowserWindow,
   MenuItemConstructorOptions,
 } from 'electron';
+import IpcMain = Electron.IpcMain;
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -14,8 +15,11 @@ interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
 
-  constructor(mainWindow: BrowserWindow) {
+  ipcMain: IpcMain;
+
+  constructor(mainWindow: BrowserWindow, ipcMain: IpcMain) {
     this.mainWindow = mainWindow;
+    this.ipcMain = ipcMain;
   }
 
   buildMenu(): Menu {
@@ -53,12 +57,26 @@ export default class MenuBuilder {
   }
 
   buildDarwinTemplate(): MenuItemConstructorOptions[] {
+    app.setAboutPanelOptions({
+      applicationName: app.getName(),
+      authors: ['Rui Rocha'],
+      version: app.getVersion(),
+      credits: 'Rui Rocha',
+    });
     const subMenuAbout: DarwinMenuItemConstructorOptions = {
-      label: 'Electron',
+      label: 'Jira Environment Manager',
       submenu: [
         {
-          label: 'About ElectronReact',
+          label: 'About Jira Environment Manager',
           selector: 'orderFrontStandardAboutPanel:',
+        },
+        { type: 'separator' },
+        {
+          label: 'Preferences...',
+          accelerator: 'Command+,',
+          click: () => {
+            this.ipcMain.emit('openSettingsScreen');
+          },
         },
         { type: 'separator' },
         { label: 'Services', submenu: [] },
@@ -93,11 +111,6 @@ export default class MenuBuilder {
         { label: 'Cut', accelerator: 'Command+X', selector: 'cut:' },
         { label: 'Copy', accelerator: 'Command+C', selector: 'copy:' },
         { label: 'Paste', accelerator: 'Command+V', selector: 'paste:' },
-        {
-          label: 'Select All',
-          accelerator: 'Command+A',
-          selector: 'selectAll:',
-        },
       ],
     };
     const subMenuViewDev: MenuItemConstructorOptions = {

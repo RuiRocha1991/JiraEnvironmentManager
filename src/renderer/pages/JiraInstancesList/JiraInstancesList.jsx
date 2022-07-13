@@ -8,6 +8,7 @@ import {
 } from './components';
 import { Layout } from '../../components';
 import { loadAllInstances } from '../../redux/slices/jiraInstanceSlice';
+import { updateSettings } from '../../redux/slices/settingsSlice';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', alignRight: false },
@@ -71,6 +72,16 @@ const JiraInstancesList = () => {
         }
       }
     );
+  });
+
+  window.electron.ipcRenderer.on('forceUpdateAndLoadSettings', () => {
+    window.electron.ipcRenderer.sendMessage('getSettings', []);
+    window.electron.ipcRenderer.once('getSettings', ({ response }) => {
+      const { status, data } = response;
+      if (status === 'OK') {
+        dispatch({ type: updateSettings.type, payload: data });
+      }
+    });
   });
 
   const handleSelectAllClick = (event) => {
