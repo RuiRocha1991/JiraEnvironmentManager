@@ -8,6 +8,7 @@ type SettingsService = {
   updateFirstLaunch: () => Promise<ServiceResponse>;
   updateSettingsConfig: (settings: Settings) => Promise<ServiceResponse>;
   getAllSettings: () => Promise<ServiceResponse>;
+  getTerminalApp: () => Promise<string>;
 };
 
 const LOGGER = new Logger('SettingsService');
@@ -92,11 +93,19 @@ const getAllSettings = async () => {
   }
 };
 
+const getTerminalApp = async () => {
+  LOGGER.log(LogLevel.DEBUG, 'Get Terminal App');
+  const terminalName = await settingsModel.getTerminalApp();
+  LOGGER.log(LogLevel.DEBUG, 'Get Terminal App: {0}', [terminalName]);
+  return terminalName;
+};
+
 const settingsService: SettingsService = {
   isFirstLaunch,
   updateFirstLaunch,
   updateSettingsConfig,
   getAllSettings,
+  getTerminalApp,
 };
 
 export default settingsService;
