@@ -40,6 +40,26 @@ export const jiraInstanceSlice = createSlice({
         return instance;
       });
     },
+    selectJiraInstance: (state, { payload }) => {
+      state.selectedJiraInstance = state.jiraInstances.find(
+        (instance) => instance._id === payload
+      );
+    },
+    removeSelectedInstance: (state, { payload }) => {
+      state.selectedJiraInstance = undefined;
+    },
+    updateInstance: (state, { payload }) => {
+      state.jiraInstances = state.jiraInstances.map((instance) => {
+        if (instance._id === payload._id) {
+          return {
+            ...instance,
+            ...payload,
+          };
+        }
+        return instance;
+      });
+      state.selectedJiraInstance = undefined;
+    },
   },
 });
 
@@ -48,6 +68,9 @@ export const {
   addInstance,
   startingOrStoppingInstance,
   startOrStopInstance,
+  selectJiraInstance,
+  removeSelectedInstance,
+  updateInstance,
 } = jiraInstanceSlice.actions;
 
 export default jiraInstanceSlice.reducer;

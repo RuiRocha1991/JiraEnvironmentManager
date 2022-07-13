@@ -14,8 +14,11 @@ import { useDispatch } from 'react-redux';
 import { SearchNotFound } from '../../../../components';
 import { SplitButton } from './components';
 import {
+  removeSelectedInstance,
+  selectJiraInstance,
   startingOrStoppingInstance,
   startOrStopInstance,
+  updateInstance,
 } from '../../../../redux/slices/jiraInstanceSlice';
 import { onToggleSnackBar } from '../../../../redux/slices/ui';
 
@@ -110,6 +113,17 @@ const JiraInstancesListBody = (props) => {
     }
   };
 
+  const handleEditInstance = (instanceId) => {
+    dispatch({ type: selectJiraInstance.type, payload: instanceId });
+    window.electron.ipcRenderer.sendMessage('openInstanceManagerWindow', []);
+    window.electron.ipcRenderer.once('removeSelectedInstance', () => {
+      dispatch({ type: removeSelectedInstance.type });
+    });
+    window.electron.ipcRenderer.once('finishUpdateInstance', (args) => {
+      dispatch({ type: updateInstance.type, payload: args[0] });
+    });
+  };
+
   const { page, rowsPerPage } = pagination;
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - jiraInstances.length) : 0;
@@ -175,6 +189,7 @@ const JiraInstancesListBody = (props) => {
                     isRunning={isRunning}
                     instanceUi={row.ui}
                     handleStartingOrStoppingInstance={handleStartOrStopInstance}
+                    handleEditInstance={handleEditInstance}
                   />
                 </TableCell>
               </TableRow>

@@ -16,7 +16,7 @@ import Iconify from '../../../../../../components/Iconify';
 const SplitButton = (props) => {
   const { isRunning, instanceId, instanceUi } = props;
 
-  const { handleStartingOrStoppingInstance } = props;
+  const { handleStartingOrStoppingInstance, handleEditInstance } = props;
 
   const [isOpen, setOpen] = useState(false);
   const anchorRef = useRef(null);
@@ -74,7 +74,10 @@ const SplitButton = (props) => {
           />
         </MenuItem>
 
-        <MenuItem sx={{ color: 'text.secondary' }}>
+        <MenuItem
+          sx={{ color: 'text.secondary' }}
+          onClick={() => handleEditInstance(instanceId)}
+        >
           <ListItemIcon>
             <Iconify icon="eva:edit-fill" width={24} height={24} />
           </ListItemIcon>
@@ -98,4 +101,5 @@ SplitButton.propTypes = {
     isDeleting: PropTypes.bool.isRequired,
   }).isRequired,
   handleStartingOrStoppingInstance: PropTypes.func.isRequired,
+  handleEditInstance: PropTypes.func.isRequired,
 };

@@ -5,7 +5,7 @@ import { JiraInstance } from '../typings/JiraInstance';
 import { ProcessInfo } from '../typings/ProcessInfo';
 import { JiraVersionInfo } from '../typings/JiraVersionInfo';
 import processService from '../services/processService';
-import { ServiceResponse } from "../typings/ServiceResponse";
+import { ServiceResponse } from '../typings/ServiceResponse';
 
 type JiraInstancesListener = {
   on: () => void;
@@ -97,6 +97,25 @@ const on = () => {
         message: e.message,
       };
       event.reply('startOrStopInstance', response);
+    }
+  });
+
+  ipcMain.on('updateJiraInstance', async (event, args) => {
+    try {
+      LOGGER.log(LogLevel.INFO, 'Update Instance: {0}', args);
+      const result = await jiraInstancesService.updateJiraInstance(args[0]);
+      const response = <ServiceResponse>{
+        status: 'OK',
+        data: result,
+      };
+      event.reply('updateJiraInstance', response);
+    } catch (e: any) {
+      LOGGER.log(LogLevel.ERROR, 'Update Instance: {0} - {1}', [...args, e]);
+      const response = <ServiceResponse>{
+        status: 'NOK',
+        message: e.message,
+      };
+      event.reply('updateJiraInstance', response);
     }
   });
 };

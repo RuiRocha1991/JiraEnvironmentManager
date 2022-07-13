@@ -15,9 +15,10 @@ import FileUtils from '../fileUtils';
 type JiraInstancesService = {
   getJiraInstances: () => Promise<ServiceResponse>;
   addNewInstance: (processInfo: ProcessInfo) => Promise<ServiceResponse>;
-  getInstaceById: (id: string) => Promise<JiraInstance>;
+  getInstanceById: (id: string) => Promise<JiraInstance>;
   openEditor: (id: string) => void;
   startOrStopInstance: (id: string) => Promise<JiraInstance>;
+  updateJiraInstance: (fields: any) => Promise<JiraInstance>;
 };
 
 const LOGGER = new Logger('JiraInstancesService');
@@ -105,7 +106,7 @@ const addNewInstance = async (processInfo: ProcessInfo) => {
   }
 };
 
-const getInstaceById = async (id: string) => {
+const getInstanceById = async (id: string) => {
   try {
     LOGGER.log(LogLevel.DEBUG, 'Get Instance by ID: {0}', [id]);
     const instance = jiraInstancesModel.getInstanceById(id);
@@ -311,12 +312,24 @@ const startOrStopInstance = async (id: string) => {
   return instance;
 };
 
+const updateJiraInstance = async (fields: any) => {
+  LOGGER.log(LogLevel.DEBUG, 'Update Instance: {0}', [fields]);
+  const instance = await jiraInstancesModel.getInstanceById(fields.id);
+  LOGGER.log(LogLevel.DEBUG, 'Update Instance: {0}', [instance]);
+  instance.description = fields.description;
+  LOGGER.log(LogLevel.DEBUG, 'Update Instance: descritpion updated');
+  await jiraInstancesModel.updateInstance(instance);
+  LOGGER.log(LogLevel.DEBUG, 'Instance Updated: {0}', [instance]);
+  return instance;
+};
+
 const jiraInstancesService: JiraInstancesService = {
   getJiraInstances,
   addNewInstance,
-  getInstaceById,
+  getInstanceById,
   openEditor,
   startOrStopInstance,
+  updateJiraInstance,
 };
 
 export default jiraInstancesService;

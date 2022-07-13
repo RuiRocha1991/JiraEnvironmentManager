@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable react/jsx-props-no-spreading,no-underscore-dangle */
 import { useEffect, useState } from 'react';
 import { Form, FormikProvider, useFormik } from 'formik';
 import {
@@ -17,6 +17,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { useDispatch, useSelector } from 'react-redux';
 import { Layout, RegisterButtonsContainer } from '../../components';
 import { startProcess } from '../../redux/slices/processSlice';
+import { onToggleSnackBar } from '../../redux/slices/ui';
 
 const Load = () => {
   return <CircularProgress size={30} sx={{ mr: 2 }} />;
@@ -33,20 +34,75 @@ const InstanceManager = () => {
   const {
     settings: { serverPath, homePath },
   } = useSelector((state) => state.appSettings);
-  const { jiraInstances } = useSelector((state) => state.jiraInstanceManager);
+  const { jiraInstances, selectedJiraInstance } = useSelector(
+    (state) => state.jiraInstanceManager
+  );
   const usedNames = jiraInstances.map((jira) => jira.name);
   const closeSettingsWindow = () => {
+    if (selectedJiraInstance) {
+      window.electron.ipcRenderer.sendMessage('removeSelectedInstance', []);
+    }
     window.electron.ipcRenderer.sendMessage('closeInstanceManagerWindow', []);
   };
+  const addNewJiraEnvironment = (values, setSubmitting) => {
+    const major = `V ${values.jiraVersion.split('.')[0]}`;
+    const minor = `${major}.${values.jiraVersion.split('.')[1]}`;
+
+    const finalValues = {
+      ...values,
+      jiraVersion: jiraVersions[major][minor].find(
+        (jiraInfo) => jiraInfo.version === values.jiraVersion
+      ),
+    };
+    window.electron.ipcRenderer.sendMessage('addNewInstance', [finalValues]);
+    window.electron.ipcRenderer.once('addNewInstance', ({ response }) => {
+      const { status, data } = response;
+      setSubmitting(false);
+      if (status === 'OK') {
+        dispatch({ type: startProcess.type, payload: data });
+        window.electron.ipcRenderer.sendMessage(
+          'redirectInstanceManagerWindow',
+          ['/processInfo']
+        );
+      } else {
+        dispatch({
+          type: onToggleSnackBar.type,
+          payload: {
+            message: response.message,
+            status: 'NOK',
+          },
+        });
+      }
+    });
+  };
+
+  const editJiraInstance = (values, setSubmitting) => {
+    window.electron.ipcRenderer.sendMessage('updateJiraInstance', [
+      { id: selectedJiraInstance._id, description: values.description },
+    ]);
+    window.electron.ipcRenderer.once('updateJiraInstance', (args) => {
+      const { status, data } = args;
+      setSubmitting(false);
+      if (status === 'OK') {
+        window.electron.ipcRenderer.sendMessage('finishUpdateInstance', [data]);
+        closeSettingsWindow();
+      } else {
+        console.log('error on update instance');
+      }
+    });
+  };
+
   const RegisterSchema = Yup.object().shape({
-    jiraVersion: Yup.string().required('Jira Version is Required'),
+    jiraVersion: !selectedJiraInstance
+      ? Yup.string().required('Jira Version is Required')
+      : Yup.string(),
     name: Yup.string()
       .max(50, 'Too Long!')
       .required('Name is required')
       .test(
         'isUnique',
         'Name must be unique',
-        (value) => !usedNames.includes(value)
+        (value) => selectedJiraInstance || !usedNames.includes(value)
       )
       .test(
         'hasWhitespaces',
@@ -70,37 +126,19 @@ const InstanceManager = () => {
   const formik = useFormik({
     initialValues: {
       jiraVersion: '',
-      name: '',
-      description: '',
-      serverPath,
-      homePath,
-      hasQuickReload: false,
+      name: selectedJiraInstance?.name || '',
+      description: selectedJiraInstance?.description || '',
+      serverPath: selectedJiraInstance?.serverPath || serverPath,
+      homePath: selectedJiraInstance?.homePath || homePath,
+      hasQuickReload: selectedJiraInstance?.hasQuickReload || false,
     },
     validationSchema: RegisterSchema,
     onSubmit: (values, { setSubmitting }) => {
-      const major = `V ${values.jiraVersion.split('.')[0]}`;
-      const minor = `${major}.${values.jiraVersion.split('.')[1]}`;
-
-      const finalValues = {
-        ...values,
-        jiraVersion: jiraVersions[major][minor].find(
-          (jiraInfo) => jiraInfo.version === values.jiraVersion
-        ),
-      };
-      window.electron.ipcRenderer.sendMessage('addNewInstance', [finalValues]);
-      window.electron.ipcRenderer.once('addNewInstance', ({ response }) => {
-        const { status, data } = response;
-        setSubmitting(false);
-        if (status === 'OK') {
-          dispatch({ type: startProcess.type, payload: data });
-          window.electron.ipcRenderer.sendMessage(
-            'redirectInstanceManagerWindow',
-            ['/processInfo']
-          );
-        } else {
-          console.log('error on loading jira versions');
-        }
-      });
+      if (selectedJiraInstance) {
+        editJiraInstance(values, setSubmitting);
+      } else {
+        addNewJiraEnvironment(values, setSubmitting);
+      }
     },
   });
 
@@ -136,7 +174,7 @@ const InstanceManager = () => {
               <Select
                 labelId="jira-version"
                 label="Jira Version"
-                disabled={isLoadingJiraVersions}
+                disabled={isLoadingJiraVersions || !!selectedJiraInstance}
                 {...getFieldProps('jiraVersion')}
                 IconComponent={isLoadingJiraVersions ? Load : ArrowDropDownIcon}
               >
@@ -153,6 +191,7 @@ const InstanceManager = () => {
             </FormControl>
             <TextField
               fullWidth
+              disabled={!!selectedJiraInstance}
               label="Name"
               {...getFieldProps('name')}
               error={Boolean(touched.name && errors.name)}
@@ -168,6 +207,7 @@ const InstanceManager = () => {
             />
             <TextField
               fullWidth
+              disabled={!!selectedJiraInstance}
               label="Server Path (Full Path)"
               {...getFieldProps('serverPath')}
               error={Boolean(touched.serverPath && errors.serverPath)}
@@ -176,12 +216,14 @@ const InstanceManager = () => {
 
             <TextField
               fullWidth
+              disabled={!!selectedJiraInstance}
               label="Home Path (Full Path)"
               {...getFieldProps('homePath')}
               error={Boolean(touched.homePath && errors.homePath)}
               helperText={touched.homePath && errors.homePath}
             />
             <FormControlLabel
+              disabled={!!selectedJiraInstance}
               control={<Checkbox {...getFieldProps('hasQuickReload')} />}
               label="Has Quick Reload"
             />

@@ -271,7 +271,6 @@ ipcMain.on('abortInstallation', (_event, args) => {
   mainWindow?.webContents.send('abortInstallation', args);
 });
 
-
 ipcMain.on('redirectMainWindow', (_event, args) => {
   LOGGER.log(LogLevel.INFO, 'Redirect Main Window to: ', args);
   mainWindow?.loadURL(resolveHtmlPath(args[0]));
@@ -280,4 +279,14 @@ ipcMain.on('redirectMainWindow', (_event, args) => {
 ipcMain.on('redirectInstanceManagerWindow', (_event, args) => {
   LOGGER.log(LogLevel.INFO, 'Redirect Instace Manager Window to: ', args);
   instanceManagerWindow?.loadURL(resolveHtmlPath(args[0]));
+});
+
+ipcMain.on('removeSelectedInstance', (_event, args) => {
+  LOGGER.log(LogLevel.INFO, 'Removing selected Instance: ', args);
+  mainWindow?.webContents.send('removeSelectedInstance', args);
+});
+
+ipcMain.on('finishUpdateInstance', (_event, args) => {
+  LOGGER.log(LogLevel.INFO, 'Finish Update Instance: ', args);
+  mainWindow?.webContents.send('finishUpdateInstance', args);
 });
