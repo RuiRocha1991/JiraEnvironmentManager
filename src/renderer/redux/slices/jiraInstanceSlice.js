@@ -45,7 +45,7 @@ export const jiraInstanceSlice = createSlice({
         (instance) => instance._id === payload
       );
     },
-    removeSelectedInstance: (state, { payload }) => {
+    removeSelectedInstance: (state) => {
       state.selectedJiraInstance = undefined;
     },
     updateInstance: (state, { payload }) => {
@@ -60,6 +60,12 @@ export const jiraInstanceSlice = createSlice({
       });
       state.selectedJiraInstance = undefined;
     },
+    deleteInstance: (state, { payload }) => {
+      state.jiraInstances = state.jiraInstances.filter(
+        (instance) => instance._id !== payload
+      );
+      state.selectedJiraInstance = undefined;
+    },
   },
 });
 
@@ -71,6 +77,7 @@ export const {
   selectJiraInstance,
   removeSelectedInstance,
   updateInstance,
+  deleteInstance,
 } = jiraInstanceSlice.actions;
 
 export default jiraInstanceSlice.reducer;

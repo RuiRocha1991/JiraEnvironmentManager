@@ -1,7 +1,6 @@
 import {
   Button,
   ButtonGroup,
-  CircularProgress,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -16,7 +15,11 @@ import Iconify from '../../../../../../components/Iconify';
 const SplitButton = (props) => {
   const { isRunning, instanceId, instanceUi } = props;
 
-  const { handleStartingOrStoppingInstance, handleEditInstance } = props;
+  const {
+    handleStartingOrStoppingInstance,
+    handleEditInstance,
+    handleDeleteInstance,
+  } = props;
 
   const [isOpen, setOpen] = useState(false);
   const anchorRef = useRef(null);
@@ -60,13 +63,12 @@ const SplitButton = (props) => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem sx={{ color: 'text.secondary' }}>
+        <MenuItem
+          sx={{ color: 'text.secondary' }}
+          onClick={() => handleDeleteInstance(instanceId)}
+        >
           <ListItemIcon>
-            {instanceUi.isDeleting ? (
-              <CircularProgress size={20} />
-            ) : (
-              <Delete width={24} height={24} />
-            )}
+            <Delete width={24} height={24} />
           </ListItemIcon>
           <ListItemText
             primary="Delete"
@@ -102,4 +104,5 @@ SplitButton.propTypes = {
   }).isRequired,
   handleStartingOrStoppingInstance: PropTypes.func.isRequired,
   handleEditInstance: PropTypes.func.isRequired,
+  handleDeleteInstance: PropTypes.func.isRequired,
 };

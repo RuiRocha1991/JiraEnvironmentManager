@@ -11,7 +11,7 @@ import processModel from '../db/process-model';
 import processService from './processService';
 import { JiraInstance } from '../typings/JiraInstance';
 import FileUtils from '../fileUtils';
-import settingsService from "./settingsService";
+import settingsService from './settingsService';
 
 type JiraInstancesService = {
   getJiraInstances: () => Promise<ServiceResponse>;
@@ -20,6 +20,7 @@ type JiraInstancesService = {
   openEditor: (id: string) => void;
   startOrStopInstance: (id: string) => Promise<JiraInstance>;
   updateJiraInstance: (fields: any) => Promise<JiraInstance>;
+  deleteInstance: (id: string) => Promise<void>;
 };
 
 const LOGGER = new Logger('JiraInstancesService');
@@ -325,6 +326,50 @@ const updateJiraInstance = async (fields: any) => {
   return instance;
 };
 
+const deleteInstanceDirectories = async (dirPath: string) => {
+  await fs.rm(
+    dirPath,
+    {
+      recursive: true,
+    },
+    (err) => {
+      if (err) {
+        LOGGER.log(LogLevel.ERROR, 'Delete directory: {0} - {1}', [
+          dirPath,
+          err,
+        ]);
+        return;
+      }
+      LOGGER.log(LogLevel.DEBUG, 'Directory Deleted: {0}', [dirPath]);
+    }
+  );
+};
+
+const deleteInstance = async (id: string) => {
+  LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}', [id]);
+  const instance = await getInstanceById(id);
+  LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}', [instance]);
+  if (instance.isRunning) {
+    LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}, is running', [instance]);
+    await stopJiraInstance(instance);
+    LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}, Stopped', [instance]);
+  }
+  LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}, Delete directories', [
+    instance,
+  ]);
+  await deleteInstanceDirectories(
+    path.join(instance.serverPath, instance.name)
+  );
+  await deleteInstanceDirectories(path.join(instance.homePath, instance.name));
+  LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}, Directories Deleted', [
+    instance,
+  ]);
+  await jiraInstancesModel.deleteInstance(id);
+  LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}, Instance removed', [
+    instance,
+  ]);
+};
+
 const jiraInstancesService: JiraInstancesService = {
   getJiraInstances,
   addNewInstance,
@@ -332,6 +377,7 @@ const jiraInstancesService: JiraInstancesService = {
   openEditor,
   startOrStopInstance,
   updateJiraInstance,
+  deleteInstance,
 };
 
 export default jiraInstancesService;

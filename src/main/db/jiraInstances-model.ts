@@ -8,6 +8,7 @@ type JiraInstancesModel = {
   getInstanceById: (id: string) => Promise<JiraInstance>;
   getInstanceRunning: () => Promise<JiraInstance>;
   updateInstance: (jiraIntance: JiraInstance) => Promise<number>;
+  deleteInstance: (id: string) => Promise<number>;
 };
 
 const LOGGER = new Logger('JiraInstances-Model');
@@ -109,12 +110,25 @@ const updateInstance = async (jiraInstance: JiraInstance) => {
   }
 };
 
+const deleteInstance = async (id: string) => {
+  try {
+    LOGGER.log(LogLevel.DEBUG, 'Delete Instance');
+    const rows = (await mainDB.jiraInstances.remove({ _id: id })) || {};
+    LOGGER.log(LogLevel.DEBUG, 'Delete Instance: {0}', [rows]);
+    return rows;
+  } catch (e: any) {
+    LOGGER.log(LogLevel.ERROR, 'Delete Instance: {0}', [e.message]);
+    throw e;
+  }
+};
+
 const jiraInstancesModel: JiraInstancesModel = {
   addJiraInstance,
   getJiraInstances,
   getInstanceById,
   getInstanceRunning,
   updateInstance,
+  deleteInstance,
 };
 
 export default jiraInstancesModel;

@@ -5,3 +5,4 @@ export { default as Iconify } from './Iconify';
 export { default as SearchNotFound } from './SearchNotFound';
 export { default as CustomSnackbar } from './CustomSnackbar';
 export { default as SettingField } from './SettingField';
+export { default as ConfirmationDialog } from './ConfirmationDialog';

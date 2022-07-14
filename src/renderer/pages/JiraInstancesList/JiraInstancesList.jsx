@@ -6,8 +6,13 @@ import {
   JiraInstanceListToolbar,
   JiraInstancesListBody,
 } from './components';
-import { Layout } from '../../components';
-import { loadAllInstances } from '../../redux/slices/jiraInstanceSlice';
+import { ConfirmationDialog, Layout } from '../../components';
+import {
+  deleteInstance,
+  loadAllInstances,
+  removeSelectedInstance,
+  selectJiraInstance,
+} from '../../redux/slices/jiraInstanceSlice';
 import { updateSettings } from '../../redux/slices/settingsSlice';
 
 const TABLE_HEAD = [
@@ -123,8 +128,48 @@ const JiraInstancesList = () => {
   const handleFilterByName = (event) => {
     setFilterName(event.target.value);
   };
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleOpenDeleteDialog = (id) => {
+    dispatch({ type: selectJiraInstance.type, payload: id });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    dispatch({ type: removeSelectedInstance.type });
+  };
+
+  const handleDelete = (id) => {
+    setIsDeleting(true);
+    window.electron.ipcRenderer.sendMessage('deleteInstance', [id]);
+    window.electron.ipcRenderer.once(
+      'deleteInstance',
+      ({ status, message }) => {
+        if (status === 'OK') {
+          setIsDeleting(false);
+          setDeleteDialogOpen(false);
+          dispatch({ type: deleteInstance.type, payload: id });
+        } else {
+          dispatch({ type: removeSelectedInstance.type });
+        }
+        console.log(message);
+      }
+    );
+  };
+
   return (
     <Layout>
+      {deleteDialogOpen && (
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          handleClose={handleCloseDeleteDialog}
+          isSubmitting={isDeleting}
+          handleSubmit={handleDelete}
+        />
+      )}
       <JiraInstanceListToolbar
         numSelected={selected.length}
         filterName={filterName}
@@ -150,6 +195,7 @@ const JiraInstancesList = () => {
             pagination={{ page, rowsPerPage }}
             selected={selected}
             handleClick={handleClick}
+            handleOpenDeleteDialog={handleOpenDeleteDialog}
           />
         </Table>
       </TableContainer>

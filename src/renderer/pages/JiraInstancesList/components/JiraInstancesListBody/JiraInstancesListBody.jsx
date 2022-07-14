@@ -8,11 +8,10 @@ import {
   Typography,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { filter } from 'lodash';
 
 import { useDispatch } from 'react-redux';
-import { SearchNotFound } from '../../../../components';
-import { SplitButton } from './components';
+import { useState } from 'react';
+import { ConfirmationDialog, SearchNotFound } from '../../../../components';
 import {
   removeSelectedInstance,
   selectJiraInstance,
@@ -21,6 +20,7 @@ import {
   updateInstance,
 } from '../../../../redux/slices/jiraInstanceSlice';
 import { onToggleSnackBar } from '../../../../redux/slices/ui';
+import { SplitButton } from './components';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -46,8 +46,7 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(
-      array,
+    return array.filter(
       (_instance) =>
         _instance.name.toLowerCase().indexOf(query.toLowerCase()) !== -1
     );
@@ -64,6 +63,7 @@ const JiraInstancesListBody = (props) => {
     pagination,
     selected,
     handleClick,
+    handleOpenDeleteDialog,
   } = props;
 
   const dispatch = useDispatch();
@@ -96,10 +96,6 @@ const JiraInstancesListBody = (props) => {
             type: startOrStopInstance.type,
             payload: args.data,
           });
-          dispatch({
-            type: startingOrStoppingInstance.type,
-            payload: { instanceId, isStartingOrStopping: false },
-          });
         } else {
           dispatch({
             type: onToggleSnackBar.type,
@@ -109,6 +105,10 @@ const JiraInstancesListBody = (props) => {
             },
           });
         }
+        dispatch({
+          type: startingOrStoppingInstance.type,
+          payload: { instanceId, isStartingOrStopping: false },
+        });
       });
     }
   };
@@ -190,6 +190,7 @@ const JiraInstancesListBody = (props) => {
                     instanceUi={row.ui}
                     handleStartingOrStoppingInstance={handleStartOrStopInstance}
                     handleEditInstance={handleEditInstance}
+                    handleDeleteInstance={handleOpenDeleteDialog}
                   />
                 </TableCell>
               </TableRow>
@@ -233,4 +234,5 @@ JiraInstancesListBody.propTypes = {
   }).isRequired,
   selected: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   handleClick: PropTypes.func.isRequired,
+  handleOpenDeleteDialog: PropTypes.func.isRequired,
 };

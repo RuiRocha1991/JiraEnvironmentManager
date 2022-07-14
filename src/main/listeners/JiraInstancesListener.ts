@@ -118,6 +118,26 @@ const on = () => {
       event.reply('updateJiraInstance', response);
     }
   });
+
+  ipcMain.on('deleteInstance', async (event, args) => {
+    try {
+      LOGGER.log(LogLevel.INFO, 'Delete Instance: {0}', args);
+      await jiraInstancesService.deleteInstance(args[0]);
+      LOGGER.log(LogLevel.DEBUG, 'Instance Deleted: {0}', args);
+      const response = <ServiceResponse>{
+        status: 'OK',
+        message: 'Instance deleted',
+      };
+      event.reply('deleteInstance', response);
+    } catch (err: any) {
+      LOGGER.log(LogLevel.ERROR, 'Delete Instance: {0}', [err.message]);
+      const response = <ServiceResponse>{
+        status: 'NOK',
+        message: err.message,
+      };
+      event.reply('deleteInstance', response);
+    }
+  });
 };
 
 const jiraInstancesListener: JiraInstancesListener = {

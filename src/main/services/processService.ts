@@ -194,7 +194,6 @@ const cleanTempFolder = async () => {
 };
 
 const updateListener = async () => {
-  console.log('call update listener: ', Date.now());
   if (!mainProcess.status.isError) {
     if (!mainProcess.status.isFinal) {
       await processModel.update(mainProcess);
